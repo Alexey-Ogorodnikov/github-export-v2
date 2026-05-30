@@ -1,0 +1,19 @@
+{
+  "name": "linkedin-job-agent",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node scripts/run-dashboard.js",
+    "login": "node scripts/login.js",
+    "read": "node scripts/read-jobs.js",
+    "check": "node scripts/check-setup.js",
+    "preprocess:rebuild": "node scripts/preprocess-rebuild.js",
+    "dashboard": "node scripts/serve-dashboard.js",
+    "dashboard:open": "node scripts/run-dashboard.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.9.0",
+    "playwright": "^1.52.0"
+  }
+}

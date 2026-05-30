@@ -1,0 +1,14 @@
+node_modules/
+browser-profile/
+browser-profile-preview/
+reports/
+data/dashboard.db
+data/dashboard-settings.json
+data/applied-jobs.json
+data/not-interested-jobs.json
+.env
+credentials.json
+token.json
+__pycache__/
+*.pyc
+.DS_Store

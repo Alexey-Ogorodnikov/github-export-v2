@@ -1,0 +1,4267 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Jobs Dashboard</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 24px;
+        line-height: 1.4;
+      }
+      h1 {
+        margin: 0 0 8px 0;
+      }
+      .muted {
+        color: #666;
+        margin-bottom: 20px;
+      }
+      .count {
+        font-size: 28px;
+        font-weight: 700;
+        margin: 8px 0 24px;
+      }
+      .grid {
+        display: grid;
+        gap: 12px;
+      }
+      .card {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 12px;
+      }
+      .card-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 6px;
+      }
+      .card-head-main {
+        flex: 1;
+        min-width: 0;
+      }
+      .card-title-row {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+      }
+      .card-title-row .title {
+        margin: 0;
+      }
+      .btn-remove {
+        flex-shrink: 0;
+        font-size: 13px;
+        padding: 6px 10px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        background: #fafafa;
+        cursor: pointer;
+      }
+      .btn-remove:hover:not(:disabled) {
+        background: #ffeceb;
+        border-color: #c62828;
+        color: #a30000;
+      }
+      .btn-remove:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+      .btn-remove-all {
+        font-size: 13px;
+        padding: 5px 12px;
+        border: 1px solid #c62828;
+        border-radius: 6px;
+        background: #fff5f5;
+        color: #a30000;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      .btn-remove-all:hover:not(:disabled) {
+        background: #ffeceb;
+      }
+      .btn-remove-all:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+      .card-actions {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 8px;
+        flex-shrink: 0;
+      }
+      .applied-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        white-space: nowrap;
+        cursor: pointer;
+        user-select: none;
+      }
+      .applied-toggle input {
+        margin: 0;
+        cursor: pointer;
+      }
+      .applied-toggle input:disabled {
+        cursor: not-allowed;
+      }
+      .card-applied {
+        background: #c8f5d0;
+        border-color: #43a047;
+      }
+      .card-not-interested {
+        background: #ffd6d6;
+        border-color: #ef5350;
+      }
+      .title {
+        font-size: 18px;
+        margin: 0 0 6px;
+      }
+      .meta {
+        font-size: 14px;
+        color: #444;
+        margin: 0 0 8px;
+      }
+      .card-head .job-ollama-panel {
+        margin-top: 8px;
+      }
+      .btn-ollama-toggle {
+        font-size: 13px;
+        padding: 6px 12px;
+        border: 1px solid #7b1fa2;
+        border-radius: 6px;
+        background: #f3e5f5;
+        color: #4a148c;
+        cursor: pointer;
+      }
+      .btn-ollama-toggle:hover {
+        background: #e1bee7;
+      }
+      .btn-ollama-toggle[aria-expanded="true"] {
+        background: #ce93d8;
+      }
+      .job-ollama-panel {
+        margin-top: 10px;
+        padding: 10px 12px;
+        border: 1px solid #d1c4e9;
+        border-radius: 8px;
+        background: #faf8ff;
+      }
+      .job-ollama-panel label {
+        display: block;
+        font-size: 13px;
+        color: #444;
+        margin-bottom: 6px;
+      }
+      .job-ollama-panel textarea {
+        width: 100%;
+        box-sizing: border-box;
+        min-height: 72px;
+        font-size: 14px;
+        padding: 8px 10px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        resize: vertical;
+        font-family: inherit;
+      }
+      .job-ollama-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        margin-top: 8px;
+      }
+      .btn-ollama-ask {
+        font-size: 13px;
+        padding: 6px 14px;
+        border: 1px solid #1976d2;
+        border-radius: 6px;
+        background: #e3f2fd;
+        color: #0d47a1;
+        cursor: pointer;
+      }
+      .btn-ollama-ask:hover:not(:disabled) {
+        background: #bbdefb;
+      }
+      .btn-ollama-ask:disabled {
+        opacity: 0.6;
+        cursor: wait;
+      }
+      .job-ollama-answer {
+        margin: 10px 0 0;
+        padding: 10px;
+        font-size: 13px;
+        line-height: 1.45;
+        white-space: pre-wrap;
+        word-break: break-word;
+        background: #fff;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        color: #222;
+      }
+      .job-ollama-answer.is-error {
+        color: #b71c1c;
+        border-color: #ef9a9a;
+        background: #ffebee;
+      }
+      .job-ollama-answer.is-loading {
+        color: #666;
+        font-style: italic;
+      }
+      .summary {
+        margin: 0 0 10px;
+      }
+      .summary-toggle {
+        cursor: pointer;
+        border-radius: 6px;
+        padding: 4px 6px;
+        margin-left: -6px;
+        margin-right: -6px;
+      }
+      .summary-toggle:hover {
+        background: #f3f3f3;
+      }
+      .summary-full {
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      .badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 999px;
+        border: 1px solid #999;
+        font-size: 12px;
+        margin-right: 8px;
+      }
+      a {
+        color: #0a58ca;
+      }
+      .verify {
+        margin: 10px 0 0;
+        padding-top: 8px;
+        border-top: 1px solid #eee;
+        font-size: 13px;
+        color: #555;
+      }
+      .verify ul {
+        margin: 6px 0 0;
+        padding-left: 18px;
+      }
+      .toolbar {
+        margin: 0 0 12px;
+        padding: 10px 12px;
+        background: #f4f4f5;
+        border-radius: 8px;
+        border: 1px solid #e0e0e0;
+      }
+      .toolbar-groups {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: stretch;
+      }
+      .toolbar-group {
+        display: flex;
+        flex-direction: column;
+        flex: 0 0 auto;
+        border: 1px solid #d8d8d8;
+        border-radius: 8px;
+        background: #fff;
+        padding: 8px 12px;
+        min-width: 0;
+        max-width: 100%;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+      }
+      .toolbar-group-head {
+        margin-bottom: 6px;
+        line-height: 1.3;
+      }
+      .toolbar-group-title {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+        color: #5c5c5c;
+        margin: 0;
+      }
+      .toolbar-group-subtitle {
+        display: block;
+        margin: 2px 0 0;
+        font-size: 11px;
+        font-weight: 400;
+        color: #777;
+        max-width: 36em;
+      }
+      .toolbar-group-body {
+        display: flex;
+        flex: 1;
+        flex-wrap: wrap;
+        gap: 8px 10px;
+        align-items: center;
+        align-content: center;
+      }
+      .tag-filters-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 10px;
+        align-items: center;
+      }
+      .toolbar label {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        white-space: nowrap;
+        margin: 0;
+      }
+      .toolbar select {
+        font-size: 13px;
+        line-height: 1.3;
+        padding: 4px 8px;
+        border: 1px solid #c8c8c8;
+        border-radius: 6px;
+        background: #fff;
+      }
+      .ai-line {
+        font-size: 13px;
+        margin: 0 0 6px;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px;
+      }
+      .badge-ai-yes {
+        background: #e7f5ee;
+        border-color: #198754;
+        color: #0f5132;
+      }
+      .badge-ai-no {
+        background: #f8f9fa;
+        border-color: #6c757d;
+        color: #495057;
+      }
+      .badge-ai-maybe {
+        background: #fff8e6;
+        border-color: #ffc107;
+        color: #664d03;
+      }
+      .badge-ai-unknown {
+        background: #f0f0f0;
+        border-color: #adb5bd;
+        color: #495057;
+      }
+      .ai-kw {
+        font-size: 12px;
+        color: #555;
+      }
+      .ai-reason {
+        font-size: 13px;
+        color: #555;
+        margin: 0 0 8px;
+      }
+      .search-bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px 16px;
+        align-items: center;
+        margin: 0 0 16px;
+        padding: 14px 16px;
+        background: #eef4ff;
+        border-radius: 8px;
+        border: 1px solid #c5d7f5;
+      }
+      .search-bar .search-field {
+        flex: 1 1 280px;
+        min-width: 0;
+      }
+      .search-bar input[type="search"] {
+        width: 100%;
+        box-sizing: border-box;
+        font-size: 16px;
+        padding: 10px 12px;
+        border: 1px solid #9db8e8;
+        border-radius: 8px;
+      }
+      .search-bar select {
+        font-size: 14px;
+        padding: 8px 10px;
+        border-radius: 8px;
+        border: 1px solid #9db8e8;
+        background: #fff;
+      }
+      .search-bar .search-hint {
+        flex: 1 1 100%;
+        font-size: 13px;
+        color: #555;
+        margin: 0;
+      }
+      .toolbar fieldset.tag-filters,
+      .tag-filters-head {
+        display: none;
+      }
+      .toolbar .tag-controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 10px;
+        align-items: center;
+        flex: 1 1 auto;
+      }
+      .toolbar .tag-controls label {
+        font-weight: normal;
+        margin: 0;
+        padding: 4px 10px;
+        border: 1px solid #d0d0d0;
+        border-radius: 999px;
+        background: #fafafa;
+        cursor: pointer;
+      }
+      .toolbar .tag-controls label:has(input:checked) {
+        background: #e8f0fe;
+        border-color: #5c8fd6;
+        color: #1a4f9c;
+      }
+      .toolbar .tag-controls input {
+        margin: 0 6px 0 0;
+      }
+      .btn-tag-config {
+        font-size: 13px;
+        padding: 4px 12px;
+        border-radius: 6px;
+        border: 1px solid #c8c8c8;
+        background: #fff;
+        color: #333;
+        cursor: pointer;
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+      .btn-tag-config:hover {
+        background: #f0f0f0;
+        border-color: #aaa;
+      }
+      .tag-filters-dialog {
+        border: none;
+        border-radius: 10px;
+        padding: 0;
+        max-width: 420px;
+        width: calc(100vw - 32px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+      }
+      .tag-filters-dialog::backdrop {
+        background: rgba(0, 0, 0, 0.35);
+      }
+      .tag-filters-dialog-inner {
+        padding: 18px 20px 16px;
+      }
+      .tag-filters-dialog h2 {
+        margin: 0 0 8px;
+        font-size: 18px;
+      }
+      .tag-filters-dialog-help {
+        margin: 0 0 14px;
+        font-size: 13px;
+        color: #555;
+        line-height: 1.45;
+      }
+      .tag-filters-manage-list {
+        list-style: none;
+        margin: 0 0 14px;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .tag-filters-manage-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 8px 10px;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        background: #fafafa;
+      }
+      .tag-filters-manage-item span {
+        font-size: 14px;
+      }
+      .tag-filters-add-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 14px;
+      }
+      .tag-filters-add-row input {
+        flex: 1 1 180px;
+        min-width: 0;
+        font-size: 14px;
+        padding: 8px 10px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+      }
+      .tag-filters-dialog-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+      }
+      .tag-filters-dialog-actions button {
+        font-size: 14px;
+        padding: 8px 14px;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+        cursor: pointer;
+        background: #fff;
+      }
+      .tag-filters-dialog-actions .btn-primary {
+        background: #e3f2fd;
+        border-color: #1976d2;
+        color: #0d47a1;
+      }
+      .tag-filters-empty {
+        margin: 0 0 14px;
+        font-size: 13px;
+        color: #666;
+      }
+      .btn-tag-delete {
+        font-size: 13px;
+        padding: 4px 10px;
+        border-radius: 6px;
+        border: 1px solid #e53935;
+        background: #ffebee;
+        color: #b71c1c;
+        cursor: pointer;
+      }
+      .visually-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+      .launcher-wrap {
+        margin-bottom: 16px;
+      }
+      .launcher-toggle {
+        font-size: 14px;
+        padding: 6px 12px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        background: #f5f5f5;
+        cursor: pointer;
+      }
+      .launcher-toggle:hover:not(:disabled) {
+        background: #eee;
+      }
+      .launcher-panel {
+        margin-top: 10px;
+        padding: 12px 14px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        background: #fafafa;
+      }
+      .launcher-panel[hidden] {
+        display: none;
+      }
+      .scenario-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        gap: 12px 16px;
+        padding: 12px 0;
+        border-bottom: 1px solid #e8e8e8;
+      }
+      .scenario-row:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+      }
+      .scenario-row:first-child {
+        padding-top: 0;
+      }
+      .scenario-text {
+        flex: 1 1 280px;
+        min-width: 0;
+      }
+      .scenario-title {
+        margin: 0 0 4px;
+        font-size: 15px;
+        font-weight: 700;
+      }
+      .scenario-desc {
+        margin: 0;
+        font-size: 13px;
+        color: #555;
+        line-height: 1.45;
+      }
+      .scenario-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        flex-shrink: 0;
+        align-items: center;
+      }
+      .scenario-btn {
+        font-size: 14px;
+        padding: 8px 16px;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      .scenario-btn:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+      .scenario-btn-execute {
+        background: #e8f5e9;
+        border-color: #43a047;
+        color: #1b5e20;
+      }
+      .scenario-btn-execute:hover:not(:disabled) {
+        background: #c8e6c9;
+      }
+      .scenario-btn-refresh {
+        background: #e3f2fd;
+        border-color: #1e88e5;
+        color: #0d47a1;
+      }
+      .scenario-btn-refresh:hover:not(:disabled) {
+        background: #bbdefb;
+      }
+      .launcher-global-actions {
+        border-bottom: 1px solid #e8e8e8;
+        padding-bottom: 12px;
+        margin-bottom: 4px;
+      }
+      .scenario-btn-test {
+        background: #fff8e1;
+        border-color: #ffa000;
+        color: #e65100;
+      }
+      .scenario-btn-test:hover:not(:disabled) {
+        background: #ffecb3;
+      }
+      .console-log-section {
+        margin: 0 0 14px;
+      }
+      .console-log-bar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 8px 12px;
+        width: 100%;
+        margin: 0;
+        padding: 10px 12px;
+        font: inherit;
+        text-align: left;
+        border: 1px solid #cfd8dc;
+        border-radius: 8px;
+        background: #eceff1;
+        cursor: pointer;
+      }
+      .console-log-bar:hover {
+        background: #e3e8eb;
+        border-color: #90a4ae;
+      }
+      .console-log-bar:focus-visible {
+        outline: 2px solid #1976d2;
+        outline-offset: 2px;
+      }
+      .console-log-bar-label {
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #546e7a;
+        flex-shrink: 0;
+      }
+      .console-log-bar-text {
+        flex: 1 1 200px;
+        min-width: 0;
+        font-size: 13px;
+        color: #37474f;
+        line-height: 1.45;
+        word-break: break-word;
+      }
+      .console-log-bar-text.is-running {
+        color: #1565c0;
+      }
+      .console-log-bar-text.is-error {
+        color: #a30000;
+      }
+      .console-log-bar-hint {
+        font-size: 12px;
+        color: #607d8b;
+        flex-shrink: 0;
+      }
+      .console-log-dialog {
+        width: min(920px, calc(100vw - 32px));
+        max-height: min(85vh, 720px);
+        padding: 0;
+        border: 1px solid #bbb;
+        border-radius: 10px;
+      }
+      .console-log-dialog::backdrop {
+        background: rgba(0, 0, 0, 0.35);
+      }
+      .console-log-dialog-inner {
+        padding: 16px 18px 14px;
+      }
+      .console-log-dialog h2 {
+        margin: 0 0 8px;
+        font-size: 18px;
+      }
+      .console-log-dialog-help {
+        margin: 0 0 10px;
+        font-size: 13px;
+        color: #666;
+      }
+      #consoleLogContent {
+        margin: 0;
+        padding: 12px;
+        max-height: min(60vh, 520px);
+        overflow: auto;
+        font-size: 12px;
+        line-height: 1.4;
+        font-family: Consolas, "Courier New", monospace;
+        background: #263238;
+        color: #eceff1;
+        border-radius: 6px;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      .console-log-dialog-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: flex-end;
+        margin-top: 12px;
+      }
+      .console-log-dialog-actions button {
+        font-size: 14px;
+        padding: 8px 14px;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+        cursor: pointer;
+        background: #fff;
+      }
+      .console-log-dialog-actions .btn-primary {
+        background: #e3f2fd;
+        border-color: #1976d2;
+        color: #0d47a1;
+      }
+      .console-log-dialog-actions .btn-console-clear {
+        background: #fff3e0;
+        border-color: #ef6c00;
+        color: #e65100;
+      }
+      .console-log-dialog-actions .btn-console-clear:hover {
+        background: #ffe0b2;
+      }
+      .launcher-unavailable {
+        margin-top: 8px;
+        font-size: 13px;
+        color: #666;
+      }
+      .add-search-row {
+        border-bottom: 1px solid #e8e8e8;
+        padding-bottom: 12px;
+        margin-bottom: 4px;
+      }
+      .add-search-controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 10px;
+        align-items: center;
+        margin-top: 6px;
+      }
+      .add-search-controls input[type="url"],
+      .add-search-controls input[type="text"] {
+        flex: 1 1 280px;
+        min-width: 0;
+        width: 100%;
+        font-size: 14px;
+        padding: 8px 10px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+      }
+      .add-search-controls .add-search-display-name {
+        flex: 0 1 220px;
+        max-width: 100%;
+      }
+      .launcher-settings-row {
+        border-bottom: 1px solid #e8e8e8;
+        padding-bottom: 12px;
+        margin-bottom: 4px;
+      }
+      .launcher-settings-controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 10px;
+        align-items: center;
+        margin-top: 6px;
+      }
+      .launcher-settings-controls label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        color: #333;
+      }
+      .launcher-settings-controls select,
+      .launcher-settings-controls input[type="number"] {
+        font-size: 14px;
+        padding: 8px 10px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        background: #fff;
+        width: 88px;
+      }
+      .launcher-settings-hint {
+        margin: 8px 0 0;
+        font-size: 13px;
+        color: #555;
+        line-height: 1.45;
+      }
+      .add-search-preview {
+        margin: 8px 0 0;
+        font-size: 13px;
+        color: #555;
+        line-height: 1.45;
+      }
+      .scenario-btn-add {
+        background: #e3f2fd;
+        border-color: #1976d2;
+        color: #0d47a1;
+      }
+      .scenario-btn-add:hover:not(:disabled) {
+        background: #bbdefb;
+      }
+      .scenario-btn-rename {
+        background: #e3f2fd;
+        border-color: #1e88e5;
+        color: #0d47a1;
+      }
+      .scenario-btn-rename:hover:not(:disabled) {
+        background: #bbdefb;
+      }
+      .scenario-btn-edit {
+        background: #f3e5f5;
+        border-color: #8e24aa;
+        color: #4a148c;
+      }
+      .scenario-btn-edit:hover:not(:disabled) {
+        background: #e1bee7;
+      }
+      .scenario-btn-delete {
+        background: #ffebee;
+        border-color: #e53935;
+        color: #b71c1c;
+      }
+      .scenario-btn-delete:hover:not(:disabled) {
+        background: #ffcdd2;
+      }
+      .scenario-btn-cancel {
+        background: #fafafa;
+        border-color: #9e9e9e;
+        color: #424242;
+      }
+      .scenario-btn-cancel:hover:not(:disabled) {
+        background: #eeeeee;
+      }
+      .lang-picker {
+        position: fixed;
+        top: 16px;
+        right: 16px;
+        z-index: 1000;
+      }
+      .lang-picker select {
+        font-size: 14px;
+        padding: 6px 10px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        background: #fff;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="lang-picker">
+      <label for="langSelect" class="visually-hidden" data-i18n="language">Language</label>
+      <select id="langSelect" aria-label="Language">
+        <option value="en">English</option>
+        <option value="ru">Русский</option>
+      </select>
+    </div>
+    <div class="launcher-wrap" id="launcherWrap">
+      <button type="button" class="launcher-toggle" id="launcherToggle" aria-expanded="false" aria-controls="launcherPanel">
+        Show menu
+      </button>
+      <div id="launcherPanel" class="launcher-panel" hidden>
+        <div id="launcherSettingsRow" class="scenario-row launcher-settings-row" hidden>
+          <div class="scenario-text">
+            <p class="scenario-title" data-i18n="settings">Settings</p>
+            <div class="launcher-settings-controls">
+              <label>
+                <span data-i18n="maxJobs">Max jobs</span>
+                <input
+                  type="number"
+                  id="maxJobsPerSearch"
+                  min="1"
+                  max="1000"
+                  step="1"
+                  inputmode="numeric"
+                />
+              </label>
+            </div>
+            <p id="maxJobsHint" class="launcher-settings-hint" data-i18n="maxJobsHint">
+              One value for all searches during full LinkedIn scrape. Enter a number from 1 to 1000.
+            </p>
+          </div>
+        </div>
+        <div id="launcherGlobalActions" class="scenario-row launcher-global-actions" hidden>
+          <div class="scenario-text">
+            <p class="scenario-title" data-i18n="launcherActions">Actions</p>
+            <p class="scenario-desc" data-i18n="launcherActionsHelp">
+              Scrape LinkedIn and refresh the job list using the buttons below.
+            </p>
+          </div>
+          <div class="scenario-actions">
+            <button type="button" id="runAllBtn" class="scenario-btn scenario-btn-execute" data-i18n="runAll">
+              Run all
+            </button>
+            <button type="button" id="refreshJobsBtn" class="scenario-btn scenario-btn-refresh" data-i18n="refreshJobs">
+              Refresh list
+            </button>
+          </div>
+        </div>
+        <div id="launcherAddForm" class="scenario-row add-search-row" hidden>
+          <div class="scenario-text">
+            <p class="scenario-title" data-i18n="addSearch">Add search</p>
+            <div class="add-search-controls">
+              <input
+                type="text"
+                id="customSearchUrl"
+                data-i18n-placeholder="searchUrlPlaceholder"
+                placeholder="LinkedIn job search URL"
+                autocomplete="off"
+                spellcheck="false"
+              />
+              <input
+                type="text"
+                id="customSearchDisplayName"
+                class="add-search-display-name"
+                data-i18n-placeholder="displayNamePlaceholder"
+                placeholder="Display name (optional)"
+                autocomplete="off"
+                spellcheck="false"
+              />
+            </div>
+            <p id="customSearchPreview" class="add-search-preview scenario-desc"></p>
+          </div>
+          <div class="scenario-actions">
+            <button type="button" class="scenario-btn scenario-btn-add" id="customSearchAdd" data-i18n="add">Add</button>
+            <button type="button" class="scenario-btn scenario-btn-cancel" id="customSearchCancel" hidden data-i18n="cancel">
+              Cancel
+            </button>
+            <button type="button" class="scenario-btn scenario-btn-test" id="customSearchTest" data-i18n="test">Test</button>
+          </div>
+        </div>
+        <div id="launcherScenarios"></div>
+        <p id="launcherUnavailable" class="launcher-unavailable" hidden></p>
+      </div>
+    </div>
+    <section id="consoleLogSection" class="console-log-section" hidden>
+      <button type="button" id="consoleLogOpenBtn" class="console-log-bar" aria-haspopup="dialog" aria-controls="consoleLogDialog">
+        <span class="console-log-bar-label" data-i18n="consoleLog">Console</span>
+        <span id="launcherStatus" class="console-log-bar-text"></span>
+        <span class="console-log-bar-hint" data-i18n="consoleLogOpenHint">Click for full history</span>
+      </button>
+    </section>
+    <h1 id="pageTitle" data-i18n="pageTitle">Jobs from saved reports</h1>
+    <div id="status" class="muted" data-i18n="loading">Loading...</div>
+    <div id="count" class="count"></div>
+    <div id="searchBar" class="search-bar" hidden>
+      <label class="search-field">
+        <span class="visually-hidden" data-i18n="search">Search</span>
+        <input
+          type="search"
+          id="keywordSearch"
+          data-i18n-placeholder="searchPlaceholder"
+          placeholder="Company, title, city, keywords…"
+          autocomplete="off"
+        />
+      </label>
+      <label>
+        <span data-i18n="applicationStatus">Application status</span>
+        <select id="appliedStatusFilter">
+          <option value="__all__" data-i18n="all">All</option>
+          <option value="not_applied" data-i18n="notApplied">Not applied</option>
+          <option value="applied" data-i18n="applied">Applied</option>
+          <option value="not_interested" data-i18n="notInterested">Not interested</option>
+        </select>
+      </label>
+      <p class="search-hint" data-i18n="searchHint">
+        Search by title, company, description, and AI tags. Green card — already applied; red — marked not interested.
+      </p>
+    </div>
+    <div id="toolbar" class="toolbar" hidden></div>
+    <div id="jobs" class="grid"></div>
+
+    <dialog id="tagFiltersDialog" class="tag-filters-dialog">
+      <div class="tag-filters-dialog-inner">
+        <h2 data-i18n="mandatoryTags">Mandatory tags</h2>
+        <p class="tag-filters-dialog-help" data-i18n="mandatoryTagsHelp">
+          Up to 5 filters. Each searches for its name in the job text. All enabled tags must match.
+        </p>
+        <ul id="tagFiltersManageList" class="tag-filters-manage-list"></ul>
+        <p id="tagFiltersEmptyHint" class="tag-filters-empty" hidden data-i18n="noFiltersYet">No filters yet.</p>
+        <div class="tag-filters-add-row">
+          <input
+            type="text"
+            id="tagFiltersNewLabel"
+            maxlength="40"
+            data-i18n-placeholder="newFilterPlaceholder"
+            placeholder="New filter name"
+            autocomplete="off"
+          />
+          <button type="button" id="tagFiltersAddBtn" class="btn-primary" data-i18n="add">Add</button>
+        </div>
+        <div class="tag-filters-dialog-actions">
+          <button type="button" id="tagFiltersCancelBtn" data-i18n="cancel">Cancel</button>
+          <button type="button" id="tagFiltersSaveBtn" class="btn-primary" data-i18n="save">Save</button>
+        </div>
+      </div>
+    </dialog>
+
+    <dialog id="consoleLogDialog" class="console-log-dialog">
+      <div class="console-log-dialog-inner">
+        <h2 data-i18n="consoleLogHistory">Console log</h2>
+        <p class="console-log-dialog-help" data-i18n="consoleLogHistoryHelp">
+          Output from scraper and Ollama preprocess (reports/run.log).
+        </p>
+        <pre id="consoleLogContent"></pre>
+        <div class="console-log-dialog-actions">
+          <button type="button" id="consoleLogClearBtn" class="btn-console-clear" data-i18n="consoleLogClear">
+            Clear
+          </button>
+          <button type="button" id="consoleLogRefreshBtn" class="btn-primary" data-i18n="consoleLogRefresh">Refresh</button>
+          <button type="button" id="consoleLogCloseBtn" data-i18n="closeDialog">Close</button>
+        </div>
+      </div>
+    </dialog>
+
+    <script>
+      const WORK_TYPE_ORDER = { Remote: 0, Hybrid: 1, "On-site": 2, Unknown: 3 };
+
+      const LANG_STORAGE_KEY = "linkedin-job-dashboard-lang";
+      let currentLang = "en";
+
+      const I18N = {
+        en: {
+          language: "Language",
+          pageTitle: "Jobs from saved reports",
+          loading: "Loading...",
+          showMenu: "Show menu",
+          hideMenu: "Hide menu",
+          settings: "Settings",
+          maxJobs: "Max jobs",
+          maxJobsHint: "One value for all searches during full LinkedIn scrape. Enter a number from 1 to 1000.",
+          addSearch: "Add search",
+          searchUrlPlaceholder: "LinkedIn job search URL",
+          searchUrlHint:
+            "Paste a URL from LinkedIn Jobs (search-results or search). Filters in the link are used as-is.",
+          displayNamePlaceholder: "Display name (optional)",
+          displayNameHint: "Short label in the list, e.g. Mobile — Montreal",
+          missingSearchUrl: "Paste a LinkedIn job search URL.",
+          invalidSearchUrl: "Invalid LinkedIn job search URL.",
+          keywordsPlaceholder: "Title / keywords",
+          period: "Period",
+          workType: "Work type",
+          region: "Region",
+          country: "Country",
+          city: "City",
+          countryPlaceholder: "Country",
+          cityPlaceholder: "City",
+          cityHintLine1: "May be empty,",
+          cityHintLine2: "for country-wide search.",
+          locationAny: "any location",
+          day1: "1 day",
+          day2: "2 days",
+          day7: "7 days",
+          dayN: "{n} days",
+          add: "Add",
+          save: "Save",
+          cancel: "Cancel",
+          test: "Test",
+          execute: "Run",
+          runAll: "Run all",
+          refreshJobs: "Refresh list",
+          launcherActions: "Actions",
+          launcherActionsHelp:
+            "Scrape LinkedIn and refresh the job list using the buttons below.",
+          confirmRunAll:
+            "Run all saved searches?\n\nLinkedIn scrape + Ollama for every search — may take a long time.",
+          confirmRefresh:
+            "Rebuild the job list from reports/ with Ollama?\n\nLinkedIn will not be opened.",
+          rename: "Rename",
+          renamePrompt: "Display name (shown in the list):",
+          renamed: "Renamed: {name}",
+          scenarioRenameFailed: "Could not rename scenario.",
+          edit: "Edit",
+          delete: "Delete",
+          search: "Search",
+          searchPlaceholder: "Company, title, city, keywords…",
+          applicationStatus: "Application status",
+          all: "All",
+          notApplied: "Not applied",
+          applied: "Applied",
+          notInterested: "Not interested",
+          searchHint:
+            "Search by title, company, description, and AI tags. Green card — already applied; red — marked not interested.",
+          mandatoryTags: "Mandatory tags",
+          mandatoryTagsHelp:
+            "Up to 5 filters. Each searches for its name in the job text. All enabled tags must match.",
+          noFiltersYet: "No filters yet.",
+          newFilterPlaceholder: "New filter name",
+          configure: "Configure",
+          workAny: "any work format",
+          customSearchDesc:
+            "LinkedIn: {keywords}, {location}, {workType}. Jobs from {period}. Full scrape → Ollama → list update.",
+          customSearchFromUrl:
+            "LinkedIn: {keywords}, {location}, {workType}. Jobs from {period}. Filters from your link. Full scrape → Ollama → list update.",
+          periodLast24h: "the last 24 hours",
+          periodLast2d: "the last 2 days",
+          periodLast7d: "the last 7 days",
+          periodLastNd: "the last {n} days",
+          running: "Running…",
+          testPreview: "Test: browser open for preview.",
+          testPreviewDetail:
+            "LinkedIn open: 1 job to preview. The window will stay open. Reports are not created.",
+          error: "Error",
+          done: "Done.",
+          runStarted: "Started…",
+          runFailed: "Finished with error (code {code}). See reports/run.log",
+          testFailedShort: "Test failed (code {code}). See reports/run.log",
+          testFailedWithLog: "Test failed (code {code}).\n{tail}",
+          testRunError: "Test error",
+          testProfileBusy:
+            "Test could not start: the browser profile is in use. Close the previous Test window or Chrome with LinkedIn, then try again.",
+          consoleLog: "Console",
+          consoleLogOpenHint: "Click for full history",
+          consoleLogHistory: "Console log",
+          consoleLogHistoryHelp: "Output from scraper and Ollama preprocess (reports/run.log).",
+          consoleLogRefresh: "Refresh",
+          consoleLogClear: "Clear",
+          confirmClearConsole: "Clear console log (reports/run.log)?",
+          consoleLogCleared: "Console cleared.",
+          closeDialog: "Close",
+          consoleLogLoading: "Loading log…",
+          consoleLogEmpty: "(empty)",
+          consoleLogUnavailable: "Log unavailable. Run via npm.cmd run dashboard.",
+          consoleLogTruncated: "Showing last {shown} KB of {total} KB.",
+          runOnlyViaDashboard:
+            "Runs are only available via npm.cmd run dashboard. Open the URL from the console (e.g. http://127.0.0.1:8081/).",
+          confirmFullRun:
+            "Run the full scenario?\n\nThis may take many minutes (LinkedIn + Ollama).",
+          startingTest: "Starting test… (up to 12 s)",
+          anotherScenarioRunning: "Another scenario is already running.",
+          apiNotFound:
+            "API not found (404). Restart npm.cmd run dashboard and open the URL from the console.",
+          missingKeywords: "Enter a title or keywords.",
+          serverNoCustomSearch:
+            "Server does not support new searches. Restart npm.cmd run dashboard.",
+          serverError: "Server error: {status}",
+          failedToStart: "Failed to start.",
+          settingsSaveFailed:
+            "Could not save settings. Restart npm.cmd run dashboard and refresh the page.",
+          tagsSaveFailed: "Could not save tags.",
+          enterFilterName: "Enter a filter name.",
+          maxFilters: "Maximum {n} filters.",
+          filterExists: "This filter already exists.",
+          saveFailed: "Could not save.",
+          enterNumberRange: "Enter a number from 1 to 1000.",
+          settingsOnlyViaDashboard: "Settings are only available via npm.cmd run dashboard.",
+          maxJobsSaved: "Max jobs: {n}",
+          settingSaveFailed: "Could not save setting.",
+          deleteSearchConfirm:
+            'Delete search "{name}"?\n\nThis action cannot be undone.',
+          deleteOnlyViaDashboard: "Deletion is only available via npm.cmd run dashboard.",
+          builtinCannotDelete: "Built-in scenario cannot be deleted.",
+          scenarioNotFound: "Scenario not found.",
+          deleted: "Deleted: {name}",
+          scenarioDeleteFailed: "Could not delete scenario.",
+          saveOnlyViaDashboard: "Saving is only available via npm.cmd run dashboard.",
+          updated: "Updated: {name}",
+          saved: "Saved: {name}",
+          scenarioSaveFailed: "Could not save scenario.",
+          menuOnlyViaDashboard: "Menu works only with npm.cmd run dashboard.",
+          dashboardJsonMissing:
+            "No jobs yet. Open the menu → Run (one search) or Run all. Requires reports/ and Ollama.",
+          allRawReports: "All saved raw reports",
+          collectionDate: "Collection date: {date}",
+          statusLine: "{reportLabel} | Raw reports in index: {count}",
+          uniqueJobs: "Unique jobs: {n}",
+          uniqueJobsFiltered: "Unique jobs: {total} · Shown after filters: {filtered}",
+          allWorkTypes: "All types",
+          aiVerdictLabel: "AI in role (Ollama)",
+          aiVerdictAll: "AI in role: all",
+          aiVerdictYes: "AI matters (yes)",
+          aiVerdictNo: "No substantial AI (no)",
+          aiVerdictMaybe: "Unclear",
+          aiVerdictUnknown: "Not classified yet",
+          reportSortLabel: "Sort by raw report time",
+          reportSortDesc: "Report: newer → older",
+          reportSortAsc: "Report: older → newer",
+          reportSortDefault: "As in list (no sort)",
+          listFilters: "List filters",
+          todayOnly: "Today's collection only",
+          reportTime: "Report time",
+          actions: "Actions",
+          mandatoryTagsHint: "All enabled tags must appear in the job text.",
+          removeAllJobs: "Remove all jobs",
+          removeAllTitle: "Clear the entire list in dashboard-jobs.json",
+          removeUnavailable:
+            "Removal unavailable: open the dashboard via npm.cmd run dashboard (http://localhost:8080/).",
+          removeAllConfirm:
+            "Remove all {total} jobs from dashboard-jobs.json?\n\nRaw reports in reports/ are not deleted — jobs may reappear after the next preprocess.",
+          restartForRemoveAll:
+            "Restart npm.cmd run dashboard — server needs /api/remove-all-jobs.",
+          apiUnreachable: "Could not reach API. Is npm.cmd run dashboard running?",
+          companyUnknown: "Company not specified",
+          summaryMissing: "Short description unavailable.",
+          summaryExpand: "Click to show full description",
+          summaryCollapse: "Click to hide full description",
+          untitled: "Untitled",
+          askOllama: "Ask Ollama",
+          askOllamaHide: "Hide Ollama",
+          askOllamaLabel: "Your question about this job",
+          askOllamaPlaceholder: "e.g. Is React Native required? Salary range mentioned?",
+          askOllamaSubmit: "Ask",
+          askOllamaLoading: "Thinking…",
+          askOllamaUnavailable: "Ollama unavailable. Run via npm.cmd run dashboard and start Ollama.",
+          askOllamaError: "Could not get an answer.",
+          removeJob: "Remove",
+          removeJobTitle: "Remove from list and dashboard-jobs.json",
+          appliedTitle: "Mark that you already applied to this job",
+          notInterestedTitle: "Mark that this job is not interesting to you",
+          linkedinDetails: "Full description (LinkedIn)",
+          aiUnknown: "AI: not classified",
+          aiYes: "AI: yes",
+          aiNo: "AI: no",
+          aiMaybe: "AI: unclear",
+          topics: "Topics:",
+          seeAllMissing: "See-all search URL missing in raw header.",
+          verifySources: "Source verification:",
+          removeJobConfirm:
+            "Remove this job from the dashboard and reports/dashboard-jobs.json?",
+          removeUnavailableDetail:
+            "Removal unavailable: data was not loaded via this project's API (e.g. only reports/dashboard-jobs.json).",
+          option1Title: "Option 1 — easiest:",
+          option1Steps: "  npm.cmd run dashboard\n  then open http://localhost:8080/ (or the port from the console).",
+          option2Title: "Option 2 — page on another port (Live Preview, etc.):",
+          option2Steps:
+            "  keep npm.cmd run dashboard running and add to the URL:\n  ?api=http://localhost:8080\n  then refresh the page.",
+          savedApiOrigin: "Saved API origin: {origin}",
+          openViaDashboard: "Open the dashboard via npm.cmd run dashboard (http://localhost:8080/).",
+          jobNotFound: "Job not found (already removed?)",
+          remove404Title: "404 on remove: request went to the wrong handler.",
+          remove404Cause:
+            "Common cause — page on :3000 with proxy only for GET /api/dashboard-jobs; POST /api/remove-job is not proxied.",
+          remove404FixTitle: "Do one of:",
+          remove404Fix1:
+            "  • Open only via the project server: npm.cmd run dashboard — URL from the console (often http://localhost:8080/).",
+          remove404Fix2:
+            "  • Or add the same proxy target for /api/remove-job as for /api/dashboard-jobs.",
+          remove404Fix3:
+            "  • Or add ?api=http://localhost:PORT where npm.cmd run dashboard is running; reload the page.",
+          remove404Tried: "Tried to remove via: {url}",
+          apiUnreachableWithHint:
+            "Could not reach API. Is npm.cmd run dashboard running? If the page uses another port, add ?api=http://localhost:PORT",
+        },
+        ru: {
+          language: "Язык",
+          pageTitle: "Вакансии по сохранённым отчётам",
+          loading: "Загрузка...",
+          showMenu: "Показать меню",
+          hideMenu: "Скрыть меню",
+          settings: "Настройки",
+          maxJobs: "Максимум вакансий",
+          maxJobsHint:
+            "Одно значение для всех поисков при полном сборе с LinkedIn. Введите число от 1 до 1000.",
+          addSearch: "Добавить поиск",
+          searchUrlPlaceholder: "Ссылка на поиск вакансий LinkedIn",
+          searchUrlHint:
+            "Вставьте URL со страницы поиска LinkedIn (search-results или search). Фильтры берутся из ссылки.",
+          displayNamePlaceholder: "Название (необязательно)",
+          displayNameHint: "Короткая подпись в списке, например Mobile — Монреаль",
+          missingSearchUrl: "Вставьте ссылку на поиск вакансий LinkedIn.",
+          invalidSearchUrl: "Некорректная ссылка на поиск LinkedIn.",
+          keywordsPlaceholder: "Название / ключевые слова",
+          period: "Период",
+          workType: "Тип работы",
+          region: "Регион",
+          country: "Страна",
+          city: "Город",
+          countryPlaceholder: "Страна",
+          cityPlaceholder: "Город",
+          cityHintLine1: "Может быть пустым,",
+          cityHintLine2: "для поиска по всей стране.",
+          locationAny: "любая локация",
+          day1: "1 день",
+          day2: "2 дня",
+          day7: "7 дней",
+          dayN: "{n} дн.",
+          add: "Добавить",
+          save: "Сохранить",
+          cancel: "Отмена",
+          test: "Тест",
+          execute: "Выполнить",
+          runAll: "Выполнить все",
+          refreshJobs: "Обновить список",
+          launcherActions: "Действия",
+          launcherActionsHelp:
+            "Сбор вакансий и обновление списка — кнопками ниже.",
+          confirmRunAll:
+            "Запустить все сохранённые поиски?\n\nСбор LinkedIn + Ollama по каждому — может занять много времени.",
+          confirmRefresh:
+            "Пересобрать список из reports/ через Ollama?\n\nLinkedIn не откроется.",
+          rename: "Переименовать",
+          renamePrompt: "Понятное название (как в списке):",
+          renamed: "Переименовано: {name}",
+          scenarioRenameFailed: "Не удалось переименовать поиск.",
+          edit: "Редактировать",
+          delete: "Удалить",
+          search: "Поиск",
+          searchPlaceholder: "Компания, должность, город, ключевые слова…",
+          applicationStatus: "Статус заявки",
+          all: "Все",
+          notApplied: "Не подавал",
+          applied: "Подал заявку",
+          notInterested: "Не интересна",
+          searchHint:
+            "Поиск по названию, компании, описанию и AI-тегам. Зелёная карточка — уже подали; красная — отмечена «не интересна».",
+          mandatoryTags: "Обязательные теги",
+          mandatoryTagsHelp:
+            "До 5 фильтров. Каждый ищет своё название в тексте вакансии. Включённые теги должны все совпасть.",
+          noFiltersYet: "Фильтров пока нет.",
+          newFilterPlaceholder: "Название нового фильтра",
+          configure: "Настроить",
+          workAny: "любой формат работы",
+          customSearchDesc:
+            "LinkedIn: {keywords}, {location}, {workType}. Вакансии за {period}. Полный сбор → Ollama → обновление списка.",
+          customSearchFromUrl:
+            "LinkedIn: {keywords}, {location}, {workType}. Вакансии за {period}. Фильтры из вашей ссылки. Полный сбор → Ollama → обновление списка.",
+          periodLast24h: "последние 24 часа",
+          periodLast2d: "последние 2 дня",
+          periodLast7d: "последние 7 дней",
+          periodLastNd: "последние {n} дн.",
+          running: "Выполняется…",
+          testPreview: "Тест: браузер открыт для просмотра.",
+          testPreviewDetail:
+            "LinkedIn открыт: 1 вакансия для просмотра. Окно не закроётся. Отчёты не создаются.",
+          error: "Ошибка",
+          done: "Готово.",
+          runStarted: "Запущено…",
+          runFailed: "Завершено с ошибкой (код {code}). Подробности: reports/run.log",
+          testFailedShort: "Тест завершился с ошибкой (код {code}). См. reports/run.log",
+          testFailedWithLog: "Тест завершился с ошибкой (код {code}).\n{tail}",
+          testRunError: "Ошибка теста",
+          testProfileBusy:
+            "Тест не запустился: профиль браузера занят. Закройте предыдущее окно Test или Chrome с LinkedIn и повторите.",
+          consoleLog: "Консоль",
+          consoleLogOpenHint: "Нажмите — полная история",
+          consoleLogHistory: "История консоли",
+          consoleLogHistoryHelp: "Вывод сбора и Ollama (reports/run.log).",
+          consoleLogRefresh: "Обновить",
+          consoleLogClear: "Очистить",
+          confirmClearConsole: "Очистить историю консоли (reports/run.log)?",
+          consoleLogCleared: "Консоль очищена.",
+          closeDialog: "Закрыть",
+          consoleLogLoading: "Загрузка лога…",
+          consoleLogEmpty: "(пусто)",
+          consoleLogUnavailable: "Лог недоступен. Запустите npm.cmd run dashboard.",
+          consoleLogTruncated: "Показаны последние {shown} КБ из {total} КБ.",
+          runOnlyViaDashboard:
+            "Запуск доступен только через npm.cmd run dashboard. Откройте URL из консоли (например http://127.0.0.1:8081/).",
+          confirmFullRun:
+            "Запустить полный сценарий?\n\nМожет занять много минут (LinkedIn + Ollama).",
+          startingTest: "Запуск теста… (до 12 с)",
+          anotherScenarioRunning: "Уже выполняется другой сценарий.",
+          apiNotFound:
+            "API не найден (404). Перезапустите npm.cmd run dashboard и откройте URL из консоли.",
+          missingKeywords: "Укажите название или ключевые слова.",
+          serverNoCustomSearch:
+            "Сервер без поддержки нового поиска. Перезапустите npm.cmd run dashboard.",
+          serverError: "Ошибка {status}",
+          failedToStart: "Не удалось запустить.",
+          settingsSaveFailed:
+            "Не удалось сохранить настройки. Перезапустите npm.cmd run dashboard и обновите страницу.",
+          tagsSaveFailed: "Не удалось сохранить теги.",
+          enterFilterName: "Введите название фильтра.",
+          maxFilters: "Максимум {n} фильтров.",
+          filterExists: "Такой фильтр уже есть.",
+          saveFailed: "Не удалось сохранить.",
+          enterNumberRange: "Укажите число от 1 до 1000.",
+          settingsOnlyViaDashboard: "Настройки доступны только через npm.cmd run dashboard.",
+          maxJobsSaved: "Максимум вакансий: {n}",
+          settingSaveFailed: "Не удалось сохранить настройку.",
+          deleteSearchConfirm:
+            "Удалить поиск «{name}»?\n\nЭто действие нельзя отменить.",
+          deleteOnlyViaDashboard: "Удаление доступно только через npm.cmd run dashboard.",
+          builtinCannotDelete: "Встроенный сценарий нельзя удалить.",
+          scenarioNotFound: "Сценарий не найден.",
+          deleted: "Удалено: {name}",
+          scenarioDeleteFailed: "Не удалось удалить сценарий.",
+          saveOnlyViaDashboard: "Сохранение доступно только через npm.cmd run dashboard.",
+          updated: "Обновлено: {name}",
+          saved: "Сохранено: {name}",
+          scenarioSaveFailed: "Не удалось сохранить сценарий.",
+          menuOnlyViaDashboard: "Меню работает только с npm.cmd run dashboard.",
+          dashboardJsonMissing:
+            "Вакансий пока нет. Меню → Выполнить (один поиск) или Выполнить все. Нужны reports/ и Ollama.",
+          allRawReports: "Все сохранённые raw-отчёты",
+          collectionDate: "Дата сборки: {date}",
+          statusLine: "{reportLabel} | Raw-отчётов в индексе: {count}",
+          uniqueJobs: "Уникальных вакансий: {n}",
+          uniqueJobsFiltered: "Уникальных вакансий: {total} · В списке после фильтров: {filtered}",
+          allWorkTypes: "Все типы",
+          aiVerdictLabel: "ИИ в роли (Ollama)",
+          aiVerdictAll: "ИИ в роли: все",
+          aiVerdictYes: "ИИ важен (да)",
+          aiVerdictNo: "Без существенного ИИ (нет)",
+          aiVerdictMaybe: "Неясно",
+          aiVerdictUnknown: "Ещё не классифицировано",
+          reportSortLabel: "Сортировка по времени raw-отчёта",
+          reportSortDesc: "Отчёт: новее → старее",
+          reportSortAsc: "Отчёт: старее → новее",
+          reportSortDefault: "Как в списке (без сортировки)",
+          listFilters: "Фильтры списка",
+          todayOnly: "Только сегодняшний сбор",
+          reportTime: "Время отчёта",
+          actions: "Действия",
+          mandatoryTagsHint: "Все включённые теги должны встретиться в тексте вакансии.",
+          removeAllJobs: "Удалить все вакансии",
+          removeAllTitle: "Очистить весь список в dashboard-jobs.json",
+          removeUnavailable:
+            "Удаление недоступно: откройте дашборд через npm.cmd run dashboard (http://localhost:8080/).",
+          removeAllConfirm:
+            "Удалить все {total} вакансий из dashboard-jobs.json?\n\nRaw-отчёты в reports/ не удаляются — при следующем preprocess вакансии могут появиться снова.",
+          restartForRemoveAll:
+            "Перезапустите npm.cmd run dashboard — нужна новая версия сервера с /api/remove-all-jobs.",
+          apiUnreachable: "Не удалось связаться с API. Запущен ли npm.cmd run dashboard?",
+          companyUnknown: "Компания не указана",
+          summaryMissing: "Краткое описание отсутствует.",
+          summaryExpand: "Нажмите, чтобы показать полное описание",
+          summaryCollapse: "Нажмите, чтобы скрыть полное описание",
+          untitled: "Без названия",
+          askOllama: "Спросить Ollama",
+          askOllamaHide: "Скрыть Ollama",
+          askOllamaLabel: "Ваш вопрос по этой вакансии",
+          askOllamaPlaceholder: "например: Нужен ли React Native? Указана ли зарплата?",
+          askOllamaSubmit: "Спросить",
+          askOllamaLoading: "Думаю…",
+          askOllamaUnavailable: "Ollama недоступна. Запустите npm.cmd run dashboard и Ollama.",
+          askOllamaError: "Не удалось получить ответ.",
+          removeJob: "Удалить",
+          removeJobTitle: "Убрать из списка и из dashboard-jobs.json",
+          appliedTitle: "Отметить, что вы уже подали заявку на эту вакансию",
+          notInterestedTitle: "Отметить, что эта вакансия вам не интересна",
+          linkedinDetails: "Подробное описание (LinkedIn)",
+          aiUnknown: "ИИ: не классифицировано",
+          aiYes: "ИИ: да",
+          aiNo: "ИИ: нет",
+          aiMaybe: "ИИ: неясно",
+          topics: "Темы:",
+          seeAllMissing: "См. search URL отсутствует в заголовке raw.",
+          verifySources: "Проверка источников:",
+          removeJobConfirm:
+            "Удалить эту вакансию из дашборда и из файла reports/dashboard-jobs.json?",
+          removeUnavailableDetail:
+            "Удаление недоступно: данные загружены не через API этого проекта (например, только файл reports/dashboard-jobs.json).",
+          option1Title: "Вариант 1 — так проще всего:",
+          option1Steps:
+            "  npm.cmd run dashboard\n  затем откройте http://localhost:8080/ (или порт из консоли).",
+          option2Title: "Вариант 2 — страница с другого порта (Live Preview и т.п.):",
+          option2Steps:
+            "  оставьте запущенным npm.cmd run dashboard и добавьте в URL:\n  ?api=http://localhost:8080\n  затем обновите страницу.",
+          savedApiOrigin: "Сохранённый API origin: {origin}",
+          openViaDashboard: "Откройте дашборд через npm.cmd run dashboard (http://localhost:8080/).",
+          jobNotFound: "Вакансия не найдена (уже удалена?)",
+          remove404Title: "404 на удаление: запрос ушёл не на тот обработчик.",
+          remove404Cause:
+            "Частая причина — страница на :3000 с прокси только для GET /api/dashboard-jobs; POST /api/remove-job туда не проксируется.",
+          remove404FixTitle: "Сделайте одно из:",
+          remove404Fix1:
+            "  • Откройте только через сервер проекта: npm.cmd run dashboard — адрес из консоли (часто http://localhost:8080/).",
+          remove404Fix2:
+            "  • Или в конфиге прокси (Vite и т.д.) добавьте тот же target для /api/remove-job, что и для /api/dashboard-jobs.",
+          remove404Fix3:
+            "  • Или в URL добавьте ?api=http://localhost:ПОРТ где уже запущен npm.cmd run dashboard; перезагрузите страницу.",
+          remove404Tried: "Пробовали удалить через: {url}",
+          apiUnreachableWithHint:
+            "Не удалось связаться с API. Запущен ли npm.cmd run dashboard? При другом порте страницы добавьте ?api=http://localhost:ПОРТ",
+        },
+      };
+
+      function t(key, params = {}) {
+        let s = I18N[currentLang]?.[key] ?? I18N.en[key] ?? key;
+        for (const [k, v] of Object.entries(params)) {
+          s = s.replaceAll(`{${k}}`, String(v));
+        }
+        return s;
+      }
+
+      function getStoredLang() {
+        try {
+          const saved = localStorage.getItem(LANG_STORAGE_KEY);
+          if (saved === "en" || saved === "ru") return saved;
+        } catch {
+          /* ignore */
+        }
+        return "en";
+      }
+
+      function applyStaticI18n() {
+        document.querySelectorAll("[data-i18n]").forEach((el) => {
+          el.textContent = t(el.getAttribute("data-i18n"));
+        });
+        document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
+          el.placeholder = t(el.getAttribute("data-i18n-placeholder"));
+        });
+        const maxJobsInput = document.getElementById("maxJobsPerSearch");
+        if (maxJobsInput) maxJobsInput.setAttribute("aria-label", t("maxJobs"));
+        const customSearchUrl = document.getElementById("customSearchUrl");
+        if (customSearchUrl) customSearchUrl.setAttribute("aria-label", t("searchUrlPlaceholder"));
+        const customSearchDisplayName = document.getElementById("customSearchDisplayName");
+        if (customSearchDisplayName) {
+          customSearchDisplayName.setAttribute("aria-label", t("displayNamePlaceholder"));
+        }
+        const appliedStatusFilter = document.getElementById("appliedStatusFilter");
+        if (appliedStatusFilter) appliedStatusFilter.setAttribute("aria-label", t("applicationStatus"));
+        const langSelect = document.getElementById("langSelect");
+        if (langSelect) langSelect.setAttribute("aria-label", t("language"));
+      }
+
+      function captureFilterState() {
+        return {
+          keywordSearch: document.getElementById("keywordSearch")?.value ?? "",
+          appliedStatusFilter: document.getElementById("appliedStatusFilter")?.value ?? "__all__",
+          todayOnlyFilter: document.getElementById("todayOnlyFilter")?.checked ?? false,
+          workFilter: document.getElementById("workFilter")?.value ?? "__all__",
+          aiVerdictFilter: document.getElementById("aiVerdictFilter")?.value ?? "__all__",
+          reportSort: document.getElementById("reportSort")?.value ?? "report_desc",
+          checkedTags: getCheckedMandatoryTagIds(),
+        };
+      }
+
+      function restoreFilterState(state) {
+        if (!state) return;
+        const keywordSearch = document.getElementById("keywordSearch");
+        if (keywordSearch) keywordSearch.value = state.keywordSearch;
+        const appliedStatusFilter = document.getElementById("appliedStatusFilter");
+        if (appliedStatusFilter) appliedStatusFilter.value = state.appliedStatusFilter;
+        const todayOnlyFilter = document.getElementById("todayOnlyFilter");
+        if (todayOnlyFilter) todayOnlyFilter.checked = state.todayOnlyFilter;
+        const workFilter = document.getElementById("workFilter");
+        if (workFilter) workFilter.value = state.workFilter;
+        const aiVerdictFilter = document.getElementById("aiVerdictFilter");
+        if (aiVerdictFilter) aiVerdictFilter.value = state.aiVerdictFilter;
+        const reportSort = document.getElementById("reportSort");
+        if (reportSort) reportSort.value = state.reportSort;
+        restoreCheckedMandatoryTagIds(state.checkedTags);
+      }
+
+      function setLang(lang) {
+        if (lang !== "en" && lang !== "ru") return;
+        currentLang = lang;
+        try {
+          localStorage.setItem(LANG_STORAGE_KEY, lang);
+        } catch {
+          /* ignore */
+        }
+        document.documentElement.lang = lang;
+        const langSelect = document.getElementById("langSelect");
+        if (langSelect) langSelect.value = lang;
+        applyStaticI18n();
+        applyLauncherMenuOpen(launcherMenuOpen);
+        updateCustomSearchPreview();
+        setCustomSearchEditMode(editingScenarioId);
+        if (document.getElementById("tagFiltersDialog")?.open) {
+          renderTagFiltersManageList();
+        }
+        if (lastData) {
+          const state = captureFilterState();
+          render(lastData);
+          restoreFilterState(state);
+          applyView();
+        }
+        renderLauncherScenarios();
+        if (lastLauncherRun) {
+          updateLauncherStatus(lastLauncherRun);
+        } else {
+          fetchRunStatus().then((run) => {
+            if (run && run.status !== "idle") updateLauncherStatus(run);
+          });
+        }
+      }
+
+      function setupLangPicker() {
+        currentLang = getStoredLang();
+        document.documentElement.lang = currentLang;
+        const langSelect = document.getElementById("langSelect");
+        if (!langSelect) return;
+        langSelect.value = currentLang;
+        applyStaticI18n();
+        langSelect.addEventListener("change", () => {
+          setLang(langSelect.value);
+        });
+      }
+
+      function getCustomWorkTypeDesc() {
+        return {
+          any: t("workAny"),
+          remote: "remote",
+          hybrid: "hybrid",
+          onsite: "on-site",
+        };
+      }
+
+      function getCustomDaysDesc() {
+        return {
+          1: t("periodLast24h"),
+          2: t("periodLast2d"),
+          7: t("periodLast7d"),
+        };
+      }
+
+      function getCustomDayLabels() {
+        return {
+          1: t("day1"),
+          2: t("day2"),
+          7: t("day7"),
+        };
+      }
+
+      const DEFAULT_MANDATORY_TAGS = [
+        { id: "tag-android", label: "Android" },
+        { id: "tag-mobile", label: "Mobile" },
+        { id: "tag-kotlin", label: "Kotlin" },
+        { id: "tag-ai", label: "AI" },
+      ];
+      const MAX_MANDATORY_TAGS = 5;
+      const MANDATORY_TAGS_STORAGE_KEY = "linkedin-job-dashboard-mandatory-tags";
+      let mandatoryTags = DEFAULT_MANDATORY_TAGS.map((tag) => ({ ...tag }));
+      let editingMandatoryTags = [];
+
+      let lastData = null;
+      let lastJobsTotal = 0;
+      /** true только если список пришёл с Node-сервера проекта (`/api/dashboard-jobs` или `?api=…`). Иначе «Удалить» не сможет записать файл. */
+      let jobsLoadedFromProjectApi = false;
+      /** Точный URL, с которого успешно загрузили JSON с полем jobs (для POST удаления на тот же хост/путь-префикс). */
+      let resolvedDashboardJobsUrl = "";
+
+      const API_ORIGIN_STORAGE_KEY = "linkedin-job-dashboard-api-origin";
+      let dashboardServerBase = "";
+      const APPLIED_STORAGE_KEY = "linkedin-job-dashboard-applied";
+      const NOT_INTERESTED_STORAGE_KEY = "linkedin-job-dashboard-not-interested";
+
+      /** База для fetch API: пустая строка = тот же origin; иначе полный origin без слэша (из `?api=` или sessionStorage). */
+      function isDashboardServerPage() {
+        if (!window.location.protocol.startsWith("http")) {
+          return false;
+        }
+        const p = window.location.pathname || "/";
+        return p === "/" || p.endsWith("/jobs-dashboard.html") || p.startsWith("/web/");
+      }
+
+      async function discoverDashboardApiBase() {
+        try {
+          const q = new URLSearchParams(window.location.search).get("api");
+          if (q && String(q).trim()) {
+            return String(q).trim().replace(/\/$/, "");
+          }
+        } catch {
+          /* ignore */
+        }
+
+        if (isDashboardServerPage()) {
+          try {
+            const r = await fetch("/api/scenarios", { cache: "no-store" });
+            if (r.ok) {
+              const data = await r.json();
+              if (data?.apiBase) {
+                return String(data.apiBase).replace(/\/$/, "");
+              }
+              return window.location.origin;
+            }
+          } catch {
+            /* scan ports below */
+          }
+        }
+
+        for (let port = 8000; port <= 8099; port += 1) {
+          const base = `http://127.0.0.1:${port}`;
+          try {
+            const r = await fetch(`${base}/api/scenarios`, { cache: "no-store" });
+            if (!r.ok) continue;
+            const data = await r.json();
+            return String(data?.apiBase || base).replace(/\/$/, "");
+          } catch {
+            /* next port */
+          }
+        }
+        return "";
+      }
+
+      async function ensureDashboardApiBase() {
+        if (dashboardServerBase) {
+          return dashboardServerBase;
+        }
+        const base = await discoverDashboardApiBase();
+        if (base) {
+          dashboardServerBase = base;
+          try {
+            sessionStorage.setItem(API_ORIGIN_STORAGE_KEY, base);
+          } catch {
+            /* ignore */
+          }
+        }
+        return dashboardServerBase;
+      }
+
+      function getDashboardApiOrigin() {
+        if (dashboardServerBase) {
+          return dashboardServerBase;
+        }
+        try {
+          const q = new URLSearchParams(window.location.search).get("api");
+          if (q && String(q).trim()) {
+            return String(q).trim().replace(/\/$/, "");
+          }
+          return sessionStorage.getItem(API_ORIGIN_STORAGE_KEY) || "";
+        } catch {
+          return "";
+        }
+      }
+
+      function canPostToDashboardApi() {
+        return jobsLoadedFromProjectApi || isDashboardServerPage();
+      }
+
+      function dashboardApiUrls(endpoint) {
+        const path = `/api/${endpoint}`;
+        const urls = [];
+        const base = getDashboardApiOrigin();
+        if (base) {
+          urls.push(`${base}${path}`);
+        }
+        const explicit = new URLSearchParams(window.location.search).get("api");
+        if (explicit && String(explicit).trim()) {
+          urls.push(`${String(explicit).trim().replace(/\/$/, "")}${path}`);
+        }
+        if (isDashboardServerPage()) {
+          urls.push(path);
+        } else {
+          const saved = sessionStorage.getItem(API_ORIGIN_STORAGE_KEY);
+          if (saved) {
+            urls.push(`${saved}${path}`);
+          }
+          urls.push(path);
+        }
+        return [...new Set(urls)];
+      }
+
+      function dashboardJobsFetchUrl() {
+        const o = getDashboardApiOrigin();
+        return o ? `${o}/api/dashboard-jobs` : "/api/dashboard-jobs";
+      }
+
+      function removeJobFetchUrl() {
+        if (resolvedDashboardJobsUrl) {
+          const base = resolvedDashboardJobsUrl.split("?")[0];
+          return base.replace(/\/dashboard-jobs\/?$/i, "/remove-job");
+        }
+        const o = getDashboardApiOrigin();
+        return o ? `${o}/api/remove-job` : "/api/remove-job";
+      }
+
+      function setAppliedFetchUrl() {
+        if (resolvedDashboardJobsUrl) {
+          const base = resolvedDashboardJobsUrl.split("?")[0];
+          return base.replace(/\/dashboard-jobs\/?$/i, "/set-applied");
+        }
+        const o = getDashboardApiOrigin();
+        return o ? `${o}/api/set-applied` : "/api/set-applied";
+      }
+
+      function setNotInterestedFetchUrl() {
+        if (resolvedDashboardJobsUrl) {
+          const base = resolvedDashboardJobsUrl.split("?")[0];
+          return base.replace(/\/dashboard-jobs\/?$/i, "/set-not-interested");
+        }
+        const o = getDashboardApiOrigin();
+        return o ? `${o}/api/set-not-interested` : "/api/set-not-interested";
+      }
+
+      function removeAllJobsFetchUrl() {
+        if (resolvedDashboardJobsUrl) {
+          const base = resolvedDashboardJobsUrl.split("?")[0];
+          return base.replace(/\/dashboard-jobs\/?$/i, "/remove-all-jobs");
+        }
+        const o = getDashboardApiOrigin();
+        return o ? `${o}/api/remove-all-jobs` : "/api/remove-all-jobs";
+      }
+
+      function runApiFetchUrl(endpoint) {
+        const path = `/api/${endpoint}`;
+        const o = getDashboardApiOrigin();
+        return o ? `${o}${path}` : path;
+      }
+
+      const LAUNCHER_OPEN_STORAGE_KEY = "linkedin-job-dashboard-launcher-open";
+
+      let launcherMenuOpen = false;
+      let launcherPollTimer = null;
+      let launcherScenarios = [];
+      let launcherStatusLockUntil = 0;
+      let lastLauncherRun = null;
+      let consoleLogDialogOpen = false;
+      let consoleLogRefreshTimer = null;
+      let editingScenarioId = null;
+      let dashboardSettings = { maxJobsPerSearch: 200 };
+      let savingMaxJobs = false;
+
+      const FALLBACK_SCENARIOS = [];
+
+      function isCustomScenario(scenario) {
+        if (typeof scenario?.builtin === "boolean") {
+          return !scenario.builtin;
+        }
+        return !FALLBACK_SCENARIOS.some((fallback) => fallback.id === scenario?.id);
+      }
+
+      function applyLauncherMenuOpen(open) {
+        launcherMenuOpen = open;
+        const panel = document.getElementById("launcherPanel");
+        const toggle = document.getElementById("launcherToggle");
+        if (!panel || !toggle) return;
+        panel.hidden = !open;
+        toggle.setAttribute("aria-expanded", open ? "true" : "false");
+        toggle.textContent = open ? t("hideMenu") : t("showMenu");
+        try {
+          sessionStorage.setItem(LAUNCHER_OPEN_STORAGE_KEY, open ? "1" : "0");
+        } catch {
+          /* ignore */
+        }
+      }
+
+      function setExecuteButtonsDisabled(disabled) {
+        document.querySelectorAll(".scenario-btn-execute").forEach((btn) => {
+          btn.disabled = disabled;
+        });
+        document.getElementById("runAllBtn")?.toggleAttribute("disabled", disabled);
+        document.getElementById("refreshJobsBtn")?.toggleAttribute("disabled", disabled);
+      }
+
+      function scenarioDisplayTitle(scenario) {
+        if (!scenario) return "";
+        const stored = String(scenario.title || "").trim();
+        if (stored) return stored;
+        if (scenario.keywords) {
+          return customSearchLabel({
+            keywords: scenario.keywords,
+            days: scenario.days ?? 1,
+            workType: scenario.workType || "any",
+            country: scenario.country,
+            city: scenario.city,
+            region: scenario.region,
+          });
+        }
+        return scenario.id || "";
+      }
+
+      function scenarioDisplayDescription(scenario) {
+        if (!scenario) return "";
+        if (scenario.keywords) {
+          return buildCustomSearchDescription({
+            keywords: scenario.keywords,
+            days: scenario.days ?? 1,
+            workType: scenario.workType || "any",
+            country: scenario.country,
+            city: scenario.city,
+            region: scenario.region,
+          });
+        }
+        return scenario.description || "";
+      }
+
+      function formatRunLabel(run) {
+        if (!run) return "";
+        if (run.scenarioId) {
+          const scenario = launcherScenarios.find((s) => s.id === run.scenarioId);
+          const title = scenarioDisplayTitle(scenario);
+          if (title) return title;
+        }
+        const raw = String(run.label || "").trim();
+        if (!raw) return "";
+        const m = raw.match(/^(.+?) — (.+?), (.+?), (\d+ дн\.?|\d+ дня|1 день|2 дня|7 дней|\d+ days?)$/);
+        if (m) {
+          const daysMap = { "1 день": 1, "2 дня": 2, "7 дней": 7, "1 day": 1, "2 days": 2, "7 days": 7 };
+          const days = daysMap[m[4]] || Number.parseInt(m[4], 10) || 1;
+          const workMap = { Remote: "remote", Hybrid: "hybrid", "On-site": "onsite", Any: "any" };
+          const locationRaw = m[2].trim();
+          const parts = locationRaw.includes(",")
+            ? locationRaw.split(",").map((s) => s.trim())
+            : [locationRaw];
+          const city = parts.length > 1 ? parts[0] : "";
+          const country = parts.length > 1 ? parts.slice(1).join(", ") : parts[0];
+          return customSearchLabel({
+            keywords: m[1].trim(),
+            city,
+            country,
+            workType: workMap[m[3].trim()] || "any",
+            days: Number.isFinite(days) ? days : 1,
+          });
+        }
+        return raw;
+      }
+
+      function stripAnsiClient(text) {
+        return String(text || "").replace(/\u001b\[[0-9;?]*[ -/]*[@-~]/g, "");
+      }
+
+      function localizeRunMessage(run) {
+        const msg = stripAnsiClient(String(run?.message || "").trim());
+        const status = run?.status;
+
+        if (status === "done" && (!msg || msg === "Готово.")) return t("done");
+        if (status === "running" && (!msg || msg === "Запущено…")) return t("runStarted");
+        if (msg === "Запуск теста…") return t("startingTest");
+        if (msg === "Ошибка теста") return t("testRunError");
+        if (
+          msg ===
+          "LinkedIn открыт: 1 вакансия для просмотра. Окно не закроётся. Отчёты не создаются."
+        ) {
+          return t("testPreviewDetail");
+        }
+        if (
+          msg ===
+          "Тест не запустился: профиль браузера занят. Закройте предыдущее окно Test или Chrome с LinkedIn и повторите."
+        ) {
+          return t("testProfileBusy");
+        }
+
+        const failMatch = msg.match(/^Завершено с ошибкой \(код (\d+)\)\./);
+        if (failMatch) return t("runFailed", { code: failMatch[1] });
+
+        const testFailMatch = msg.match(/^Тест завершился с ошибкой \(код (\d+)\)\./);
+        if (testFailMatch) {
+          const rest = msg.slice(testFailMatch[0].length).trim();
+          if (rest) return t("testFailedWithLog", { code: testFailMatch[1], tail: stripAnsiClient(rest) });
+          return t("testFailedShort", { code: testFailMatch[1] });
+        }
+
+        if (status === "preview" && !msg) return t("testPreview");
+        if (status === "error" && !msg) return t("error");
+        if (status === "running" && !msg) return t("running");
+        return msg;
+      }
+
+      function showConsoleBarMessage(text, stateClass = "") {
+        const section = document.getElementById("consoleLogSection");
+        const el = document.getElementById("launcherStatus");
+        if (!el) return;
+        const visible = Boolean(text);
+        if (section) section.hidden = !visible;
+        el.textContent = text;
+        el.className = "console-log-bar-text";
+        if (stateClass) el.classList.add(stateClass);
+      }
+
+      function updateLauncherStatus(run) {
+        lastLauncherRun = run && run.status !== "idle" ? run : null;
+        if (!run || run.status === "idle") {
+          showConsoleBarMessage("");
+          return;
+        }
+        const label = formatRunLabel(run);
+        const prefix = label ? `${label}: ` : "";
+        const msg = localizeRunMessage(run);
+        if (run.status === "running") {
+          showConsoleBarMessage(`${prefix}${msg}`, "is-running");
+        } else if (run.status === "preview") {
+          showConsoleBarMessage(msg);
+        } else if (run.status === "error") {
+          showConsoleBarMessage(`${prefix}${msg}`, "is-error");
+        } else if (run.status === "done") {
+          showConsoleBarMessage(`${prefix}${msg}`);
+        }
+      }
+
+      async function fetchRunLogText() {
+        const urls = dashboardApiUrls("run-log");
+        for (const url of urls) {
+          try {
+            const r = await fetch(url, { cache: "no-store" });
+            if (!r.ok) continue;
+            const data = await r.json();
+            if (!data?.ok) continue;
+            let content = typeof data.content === "string" ? data.content : "";
+            if (data.truncated && data.size) {
+              const shownKb = Math.round((data.bytesShown || 0) / 1024);
+              const totalKb = Math.round(data.size / 1024);
+              const note = t("consoleLogTruncated", { shown: shownKb, total: totalKb });
+              content = `${note}\n\n${content}`;
+            }
+            return content;
+          } catch {
+            /* next */
+          }
+        }
+        return null;
+      }
+
+      async function refreshConsoleLogDialog(scrollToBottom = true) {
+        const pre = document.getElementById("consoleLogContent");
+        if (!pre) return;
+        pre.textContent = t("consoleLogLoading");
+        const text = await fetchRunLogText();
+        if (text === null) {
+          pre.textContent = t("consoleLogUnavailable");
+          return;
+        }
+        pre.textContent = text.trim() ? text : t("consoleLogEmpty");
+        if (scrollToBottom) {
+          pre.scrollTop = pre.scrollHeight;
+        }
+      }
+
+      function setConsoleLogAutoRefresh(enabled) {
+        if (consoleLogRefreshTimer) {
+          window.clearInterval(consoleLogRefreshTimer);
+          consoleLogRefreshTimer = null;
+        }
+        if (enabled) {
+          consoleLogRefreshTimer = window.setInterval(() => {
+            if (consoleLogDialogOpen) {
+              refreshConsoleLogDialog(true);
+            }
+          }, 2000);
+        }
+      }
+
+      async function openConsoleLogDialog() {
+        const dialog = document.getElementById("consoleLogDialog");
+        if (!dialog) return;
+        consoleLogDialogOpen = true;
+        dialog.showModal();
+        await refreshConsoleLogDialog(true);
+        const run = await fetchRunStatus();
+        setConsoleLogAutoRefresh(run?.status === "running");
+      }
+
+      function closeConsoleLogDialog() {
+        const dialog = document.getElementById("consoleLogDialog");
+        consoleLogDialogOpen = false;
+        setConsoleLogAutoRefresh(false);
+        dialog?.close();
+      }
+
+      async function clearConsoleLog() {
+        if (!confirm(t("confirmClearConsole"))) return;
+        await ensureDashboardApiBase();
+        if (!canPostToDashboardApi() && !dashboardServerBase) {
+          alert(t("consoleLogUnavailable"));
+          return;
+        }
+        let cleared = false;
+        for (const url of dashboardApiUrls("run-log/clear")) {
+          try {
+            const r = await fetch(url, { method: "POST" });
+            const data = await r.json().catch(() => ({}));
+            if (r.ok && data?.ok) {
+              cleared = true;
+              break;
+            }
+          } catch {
+            /* next */
+          }
+        }
+        if (!cleared) {
+          alert(t("consoleLogUnavailable"));
+          return;
+        }
+        await refreshConsoleLogDialog(false);
+        showConsoleBarMessage(t("consoleLogCleared"));
+      }
+
+      function setupConsoleLog() {
+        document.getElementById("consoleLogOpenBtn")?.addEventListener("click", () => {
+          openConsoleLogDialog();
+        });
+        document.getElementById("consoleLogClearBtn")?.addEventListener("click", () => {
+          clearConsoleLog();
+        });
+        document.getElementById("consoleLogRefreshBtn")?.addEventListener("click", () => {
+          refreshConsoleLogDialog(true);
+        });
+        document.getElementById("consoleLogCloseBtn")?.addEventListener("click", closeConsoleLogDialog);
+        document.getElementById("consoleLogDialog")?.addEventListener("close", () => {
+          consoleLogDialogOpen = false;
+          setConsoleLogAutoRefresh(false);
+        });
+      }
+
+      async function fetchRunStatus() {
+        const urls = dashboardApiUrls("run-status");
+        for (const url of urls) {
+          try {
+            const r = await fetch(url, { cache: "no-store" });
+            if (!r.ok) continue;
+            return await r.json();
+          } catch {
+            /* next */
+          }
+        }
+        return null;
+      }
+
+      async function pollLauncherRunStatus() {
+        const run = await fetchRunStatus();
+        if (Date.now() < launcherStatusLockUntil && (!run || run.status === "idle")) {
+          return;
+        }
+        if (!run) return;
+        updateLauncherStatus(run);
+        const running = run.status === "running";
+        setExecuteButtonsDisabled(running);
+        if (running) {
+          if (!launcherPollTimer) {
+            launcherPollTimer = window.setInterval(pollLauncherRunStatus, 2000);
+          }
+          return;
+        }
+        if (launcherPollTimer) {
+          window.clearInterval(launcherPollTimer);
+          launcherPollTimer = null;
+        }
+        if (run.status === "done" || run.status === "error") {
+          await loadData();
+        }
+        if (consoleLogDialogOpen) {
+          await refreshConsoleLogDialog(true);
+          setConsoleLogAutoRefresh(run.status === "running");
+        }
+      }
+
+      function legacyRegionToFields(region) {
+        const normalized = String(region || "").toLowerCase();
+        if (normalized === "canada") return { country: "Canada", city: "" };
+        if (normalized === "quebec") return { country: "Canada", city: "Québec" };
+        return { country: "", city: "" };
+      }
+
+      function formatSearchLocation({ city, country, region } = {}) {
+        const cityTrim = String(city || "").trim();
+        const countryTrim = String(country || "").trim();
+        if (cityTrim && countryTrim) return `${cityTrim}, ${countryTrim}`;
+        if (cityTrim) return cityTrim;
+        if (countryTrim) return countryTrim;
+        if (region) return formatSearchLocation(legacyRegionToFields(region));
+        return "";
+      }
+
+      const CUSTOM_SEARCH_REGIONS = {
+        quebec: { geoId: "102237789", label: "Québec" },
+        canada: { geoId: "101174742", label: "Canada" },
+      };
+      const CUSTOM_F_WT_TO_WORK_TYPE = { "1": "onsite", "2": "remote", "3": "hybrid" };
+
+      function canonicalizeLinkedInJobsSearchUrl(urlString) {
+        const trimmed = String(urlString || "").trim();
+        if (!trimmed) return "";
+        let u;
+        try {
+          u = new URL(trimmed);
+        } catch {
+          return "";
+        }
+        if (!/linkedin\.com$/i.test(u.hostname)) return "";
+        const pathLower = u.pathname.toLowerCase();
+        if (!pathLower.includes("/jobs/search")) return "";
+        if (/\/jobs\/search-results\b/i.test(u.pathname)) {
+          u.pathname = u.pathname.replace(/\/jobs\/search-results\/?/i, "/jobs/search/");
+        }
+        u.searchParams.delete("currentJobId");
+        u.searchParams.delete("referralSearchId");
+        u.searchParams.delete("skipRedirect");
+        return u.toString();
+      }
+
+      function daysFromLinkedInFTpr(fTpr) {
+        const raw = String(fTpr || "").trim();
+        if (!raw) return undefined;
+        if (/^a/i.test(raw)) return 1;
+        const m = raw.match(/^r(\d+)$/i);
+        if (!m) return undefined;
+        const seconds = Number(m[1]);
+        if (!Number.isFinite(seconds) || seconds <= 0) return undefined;
+        return Math.round(seconds / 86400);
+      }
+
+      function parseLinkedInSearchUrlClient(urlString) {
+        const url = canonicalizeLinkedInJobsSearchUrl(urlString);
+        if (!url) return null;
+        const u = new URL(url);
+        const param = (name) => {
+          const raw = u.searchParams.get(name);
+          return raw ? String(raw).replace(/\+/g, " ").trim() : "";
+        };
+        const keywords = param("keywords") || param("keyword") || param("query") || "";
+        const locationParam = param("location");
+        const geoId = u.searchParams.get("geoId") || "";
+        let country = "";
+        let city = "";
+        if (locationParam) {
+          const parts = locationParam.split(",").map((s) => s.trim()).filter(Boolean);
+          if (parts.length > 1) {
+            city = parts[0];
+            country = parts.slice(1).join(", ");
+          } else if (parts.length === 1) {
+            country = parts[0];
+          }
+        } else if (geoId) {
+          const regionEntry = Object.values(CUSTOM_SEARCH_REGIONS).find((r) => r.geoId === geoId);
+          if (regionEntry) country = regionEntry.label;
+        }
+        const workType = CUSTOM_F_WT_TO_WORK_TYPE[u.searchParams.get("f_WT") || ""] || "any";
+        const daysRaw = daysFromLinkedInFTpr(u.searchParams.get("f_TPR") || "");
+        const days = [1, 2, 7].includes(daysRaw) ? daysRaw : daysRaw ?? 1;
+        return { keywords, days, workType, country, city, url };
+      }
+
+      function normalizeCustomSearchParams(raw) {
+        const keywords = String(raw?.keywords || "").trim();
+        const days = [1, 2, 7].includes(Number(raw?.days)) ? Number(raw.days) : 1;
+        const workType = String(raw?.workType || "any").toLowerCase();
+        let country = String(raw?.country || "").trim();
+        let city = String(raw?.city || "").trim();
+        if (!country && !city && raw?.region) {
+          const legacy = legacyRegionToFields(raw.region);
+          country = legacy.country;
+          city = legacy.city;
+        }
+        return { keywords, days, workType, country, city };
+      }
+
+      function buildCustomSearchDescription(params) {
+        const normalized = normalizeCustomSearchParams(params);
+        const locationLabel = formatSearchLocation(normalized) || t("locationAny");
+        const workLabel = getCustomWorkTypeDesc()[normalized.workType] || normalized.workType;
+        const periodLabel =
+          getCustomDaysDesc()[normalized.days] || t("periodLastNd", { n: normalized.days });
+        const keywords = normalized.keywords || "…";
+        return t("customSearchFromUrl", {
+          keywords,
+          location: locationLabel,
+          workType: workLabel,
+          period: periodLabel,
+        });
+      }
+
+      function customSearchLabel(params) {
+        const normalized = normalizeCustomSearchParams(params);
+        const locationLabel = formatSearchLocation(normalized) || "…";
+        const workLabels = { remote: "Remote", hybrid: "Hybrid", onsite: "On-site", any: "Any" };
+        const dayLabels = getCustomDayLabels();
+        const workLabel = workLabels[normalized.workType] || normalized.workType || "Any";
+        const daysLabel = dayLabels[normalized.days] || t("dayN", { n: normalized.days });
+        return `${normalized.keywords || "…"} — ${locationLabel}, ${workLabel}, ${daysLabel}`;
+      }
+
+      function readCustomSearchUrl() {
+        return document.getElementById("customSearchUrl")?.value?.trim() || "";
+      }
+
+      function readCustomSearchDisplayName() {
+        return document.getElementById("customSearchDisplayName")?.value?.trim() || "";
+      }
+
+      function updateCustomSearchPreview() {
+        const preview = document.getElementById("customSearchPreview");
+        if (!preview) return;
+        const displayName = readCustomSearchDisplayName();
+        const raw = readCustomSearchUrl();
+        if (!raw) {
+          preview.textContent = displayName
+            ? `${t("displayNameHint")}: ${displayName}`
+            : t("searchUrlHint");
+          return;
+        }
+        const parsed = parseLinkedInSearchUrlClient(raw);
+        if (!parsed) {
+          preview.textContent = t("invalidSearchUrl");
+          return;
+        }
+        const autoDesc = buildCustomSearchDescription(
+          parsed.keywords ? parsed : { ...parsed, keywords: parsed.country || "LinkedIn search" },
+        );
+        preview.textContent = displayName ? `${displayName} — ${autoDesc}` : autoDesc;
+      }
+
+      async function postRunRequest(body, mode, retriedAfter404 = false) {
+        await ensureDashboardApiBase();
+        if (!canPostToDashboardApi() && !dashboardServerBase) {
+          alert(t("runOnlyViaDashboard"));
+          return;
+        }
+        if (mode === "execute") {
+          const action = body?.action;
+          let confirmed = true;
+          if (action === "run-all") {
+            confirmed = confirm(t("confirmRunAll"));
+          } else if (action === "refresh") {
+            confirmed = confirm(t("confirmRefresh"));
+          } else {
+            confirmed = confirm(t("confirmFullRun"));
+          }
+          if (!confirmed) {
+            return;
+          }
+        }
+        if (mode === "execute") {
+          launcherStatusLockUntil = 0;
+        }
+
+        if (mode === "test") {
+          showConsoleBarMessage(t("startingTest"), "is-running");
+        }
+
+        const urls = dashboardApiUrls("run");
+        let lastError = "";
+        for (const url of urls) {
+          try {
+            const r = await fetch(url, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ ...body, mode }),
+              signal: mode === "test" ? AbortSignal.timeout(20000) : undefined,
+            });
+            const payload = await r.json().catch(() => ({}));
+            if (r.status === 409) {
+              updateLauncherStatus(
+                payload.run || { status: "running", message: t("anotherScenarioRunning") },
+              );
+              setExecuteButtonsDisabled(true);
+              pollLauncherRunStatus();
+              return;
+            }
+            if (!r.ok) {
+              if (r.status === 404 && !retriedAfter404) {
+                const found = await discoverDashboardApiBase();
+                if (found) {
+                  dashboardServerBase = found;
+                  sessionStorage.setItem(API_ORIGIN_STORAGE_KEY, found);
+                  return postRunRequest(body, mode, true);
+                }
+              }
+              const errMsg =
+                payload.run?.message ||
+                payload.error ||
+                (r.status === 404
+                  ? t("apiNotFound")
+                  : payload.error === "missing_keywords"
+                    ? t("missingKeywords")
+                    : payload.error === "invalid_url"
+                      ? t("invalidSearchUrl")
+                      : payload.error === "missing scenario"
+                      ? t("serverNoCustomSearch")
+                      : t("serverError", { status: r.status }));
+              lastError = errMsg;
+              if (mode === "test") {
+                updateLauncherStatus({
+                  status: "error",
+                  label: "",
+                  message: errMsg,
+                });
+                return;
+              }
+              continue;
+            }
+            const runInfo = payload.run || {
+              status: mode === "test" ? "preview" : "running",
+              message: payload.run?.message,
+            };
+            if (mode === "test") {
+              launcherStatusLockUntil = Date.now() + 120000;
+            }
+            updateLauncherStatus(runInfo);
+            if (mode === "execute") {
+              setExecuteButtonsDisabled(true);
+              if (!launcherPollTimer) {
+                launcherPollTimer = window.setInterval(pollLauncherRunStatus, 2000);
+              }
+            }
+            return;
+          } catch (e) {
+            lastError = String(e?.message || e);
+          }
+        }
+        alert(lastError || t("failedToStart"));
+      }
+
+      async function startScenario(scenarioId, mode) {
+        return postRunRequest({ scenario: scenarioId }, mode);
+      }
+
+      async function startCustomSearch(mode) {
+        const rawUrl = readCustomSearchUrl();
+        if (!rawUrl) {
+          alert(t("missingSearchUrl"));
+          document.getElementById("customSearchUrl")?.focus();
+          return;
+        }
+        if (!canonicalizeLinkedInJobsSearchUrl(rawUrl)) {
+          alert(t("invalidSearchUrl"));
+          document.getElementById("customSearchUrl")?.focus();
+          return;
+        }
+        const parsed = parseLinkedInSearchUrlClient(rawUrl);
+        const label = parsed?.keywords
+          ? customSearchLabel(parsed)
+          : scenarioDisplayTitle({ title: rawUrl.slice(0, 80), keywords: "" }) || rawUrl.slice(0, 80);
+        return postRunRequest({ url: rawUrl.trim(), label }, mode);
+      }
+
+      async function reloadLauncherScenarios() {
+        await ensureDashboardApiBase();
+        outer: for (const endpoint of ["scenarios", "pipelines"]) {
+          for (const url of dashboardApiUrls(endpoint)) {
+            try {
+              const r = await fetch(url, { cache: "no-store" });
+              if (!r.ok) continue;
+              const data = await r.json();
+              if (data?.apiBase) {
+                dashboardServerBase = String(data.apiBase).replace(/\/$/, "");
+              }
+              if (data?.settings) {
+                applyDashboardSettings(data.settings);
+              }
+              if (Array.isArray(data.scenarios)) {
+                launcherScenarios = data.scenarios.length ? data.scenarios : FALLBACK_SCENARIOS;
+                break outer;
+              }
+            } catch {
+              /* next */
+            }
+          }
+        }
+        renderLauncherScenarios();
+      }
+
+      function applyDashboardSettings(settings) {
+        if (!settings || typeof settings !== "object") return;
+        dashboardSettings = {
+          maxJobsPerSearch: Number(settings.maxJobsPerSearch) || 200,
+        };
+        if (Array.isArray(settings.mandatoryTags)) {
+          mandatoryTags = normalizeMandatoryTagsClient(settings.mandatoryTags);
+          try {
+            localStorage.setItem(MANDATORY_TAGS_STORAGE_KEY, JSON.stringify(mandatoryTags));
+          } catch {
+            /* ignore */
+          }
+        }
+        syncMaxJobsInput();
+        if (lastData) {
+          const checkedTagIds = getCheckedMandatoryTagIds();
+          buildToolbar(lastData);
+          restoreCheckedMandatoryTagIds(checkedTagIds);
+          applyView();
+        }
+      }
+
+      function normalizeMandatoryTagsClient(raw) {
+        if (!Array.isArray(raw)) {
+          return DEFAULT_MANDATORY_TAGS.map((tag) => ({ ...tag }));
+        }
+        const next = [];
+        const seenIds = new Set();
+        for (const item of raw) {
+          const label = String(item?.label || "").trim().slice(0, 40);
+          if (!label) continue;
+          let id = String(item?.id || "").trim() || makeMandatoryTagId(label);
+          let uniqueId = id;
+          let n = 2;
+          while (seenIds.has(uniqueId)) {
+            uniqueId = `${id}-${n}`;
+            n += 1;
+          }
+          seenIds.add(uniqueId);
+          next.push({ id: uniqueId, label });
+          if (next.length >= MAX_MANDATORY_TAGS) break;
+        }
+        return next.length ? next : DEFAULT_MANDATORY_TAGS.map((tag) => ({ ...tag }));
+      }
+
+      function makeMandatoryTagId(label) {
+        const base = String(label || "")
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/\p{M}/gu, "")
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-+|-+$/g, "")
+          .slice(0, 32);
+        return base ? `tag-${base}` : `tag-${Date.now().toString(36)}`;
+      }
+
+      function loadMandatoryTagsFromLocalStorage() {
+        try {
+          const raw = localStorage.getItem(MANDATORY_TAGS_STORAGE_KEY);
+          if (!raw) return;
+          mandatoryTags = normalizeMandatoryTagsClient(JSON.parse(raw));
+        } catch {
+          /* ignore */
+        }
+      }
+
+      function getCheckedMandatoryTagIds() {
+        return new Set(
+          mandatoryTags.filter((tag) => document.getElementById(tag.id)?.checked).map((tag) => tag.id),
+        );
+      }
+
+      function restoreCheckedMandatoryTagIds(checkedIds) {
+        for (const id of checkedIds) {
+          const el = document.getElementById(id);
+          if (el) el.checked = true;
+        }
+      }
+
+      function buildSettingsPostBody(patch = {}) {
+        return {
+          maxJobsPerSearch:
+            patch.maxJobsPerSearch === undefined
+              ? dashboardSettings.maxJobsPerSearch || 200
+              : patch.maxJobsPerSearch,
+          mandatoryTags: patch.mandatoryTags === undefined ? mandatoryTags : patch.mandatoryTags,
+        };
+      }
+
+      function formatSettingsError(error) {
+        if (error === "missing_max_jobs" || error === "missing_fields") {
+          return t("settingsSaveFailed");
+        }
+        return error;
+      }
+
+      async function saveMandatoryTags(nextTags) {
+        const normalized = normalizeMandatoryTagsClient(nextTags);
+        await ensureDashboardApiBase();
+        if (!canPostToDashboardApi() && !dashboardServerBase) {
+          mandatoryTags = normalized;
+          try {
+            localStorage.setItem(MANDATORY_TAGS_STORAGE_KEY, JSON.stringify(mandatoryTags));
+          } catch {
+            /* ignore */
+          }
+          if (lastData) {
+            const checkedTagIds = getCheckedMandatoryTagIds();
+            buildToolbar(lastData);
+            restoreCheckedMandatoryTagIds(checkedTagIds);
+            applyView();
+          }
+          return { ok: true };
+        }
+        let lastError = "";
+        for (const url of dashboardApiUrls("settings")) {
+          try {
+            const r = await fetch(url, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(buildSettingsPostBody({ mandatoryTags: normalized })),
+            });
+            const payload = await r.json().catch(() => ({}));
+            if (!r.ok) {
+              lastError = formatSettingsError(payload.message || payload.error || t("serverError", { status: r.status }));
+              continue;
+            }
+            applyDashboardSettings({ ...(payload.settings || {}), mandatoryTags: normalized });
+            return { ok: true };
+          } catch (e) {
+            lastError = String(e?.message || e);
+          }
+        }
+        return { ok: false, error: lastError || t("tagsSaveFailed") };
+      }
+
+      function renderTagFiltersManageList() {
+        const list = document.getElementById("tagFiltersManageList");
+        const emptyHint = document.getElementById("tagFiltersEmptyHint");
+        const addBtn = document.getElementById("tagFiltersAddBtn");
+        if (!list) return;
+        list.innerHTML = "";
+        if (emptyHint) {
+          emptyHint.hidden = editingMandatoryTags.length > 0;
+        }
+        if (addBtn) {
+          addBtn.disabled = editingMandatoryTags.length >= MAX_MANDATORY_TAGS;
+        }
+        for (const tag of editingMandatoryTags) {
+          const item = document.createElement("li");
+          item.className = "tag-filters-manage-item";
+          const label = document.createElement("span");
+          label.textContent = tag.label;
+          const btnDelete = document.createElement("button");
+          btnDelete.type = "button";
+          btnDelete.className = "btn-tag-delete";
+          btnDelete.textContent = t("delete");
+          btnDelete.addEventListener("click", () => {
+            editingMandatoryTags = editingMandatoryTags.filter((t) => t.id !== tag.id);
+            renderTagFiltersManageList();
+          });
+          item.appendChild(label);
+          item.appendChild(btnDelete);
+          list.appendChild(item);
+        }
+      }
+
+      function openTagFiltersDialog() {
+        const dialog = document.getElementById("tagFiltersDialog");
+        if (!dialog) return;
+        editingMandatoryTags = mandatoryTags.map((tag) => ({ ...tag }));
+        renderTagFiltersManageList();
+        const input = document.getElementById("tagFiltersNewLabel");
+        if (input) {
+          input.value = "";
+        }
+        if (typeof dialog.showModal === "function") {
+          dialog.showModal();
+          input?.focus();
+        }
+      }
+
+      function closeTagFiltersDialog() {
+        document.getElementById("tagFiltersDialog")?.close?.();
+      }
+
+      function addEditingMandatoryTag() {
+        const input = document.getElementById("tagFiltersNewLabel");
+        const label = String(input?.value || "").trim().slice(0, 40);
+        if (!label) {
+          alert(t("enterFilterName"));
+          input?.focus();
+          return;
+        }
+        if (editingMandatoryTags.length >= MAX_MANDATORY_TAGS) {
+          alert(t("maxFilters", { n: MAX_MANDATORY_TAGS }));
+          return;
+        }
+        if (editingMandatoryTags.some((tag) => tag.label.toLowerCase() === label.toLowerCase())) {
+          alert(t("filterExists"));
+          input?.focus();
+          return;
+        }
+        editingMandatoryTags.push({ id: makeMandatoryTagId(label), label });
+        if (input) input.value = "";
+        renderTagFiltersManageList();
+        input?.focus();
+      }
+
+      async function commitMandatoryTagsDialog() {
+        const btn = document.getElementById("tagFiltersSaveBtn");
+        if (btn) btn.disabled = true;
+        try {
+          const result = await saveMandatoryTags(editingMandatoryTags);
+          if (!result.ok) {
+            alert(result.error || t("saveFailed"));
+            return;
+          }
+          closeTagFiltersDialog();
+        } finally {
+          if (btn) btn.disabled = false;
+        }
+      }
+
+      function setupTagFiltersDialog() {
+        document.getElementById("tagFiltersAddBtn")?.addEventListener("click", addEditingMandatoryTag);
+        document.getElementById("tagFiltersSaveBtn")?.addEventListener("click", () => {
+          commitMandatoryTagsDialog();
+        });
+        document.getElementById("tagFiltersCancelBtn")?.addEventListener("click", closeTagFiltersDialog);
+        document.getElementById("tagFiltersNewLabel")?.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            addEditingMandatoryTag();
+          }
+        });
+        document.getElementById("tagFiltersDialog")?.addEventListener("cancel", (e) => {
+          e.preventDefault();
+          closeTagFiltersDialog();
+        });
+      }
+
+      function syncMaxJobsInput() {
+        const input = document.getElementById("maxJobsPerSearch");
+        if (!input) return;
+        input.value = String(dashboardSettings.maxJobsPerSearch || 200);
+      }
+
+      async function commitMaxJobsInput() {
+        const input = document.getElementById("maxJobsPerSearch");
+        if (!input) return;
+        const parsed = Number.parseInt(String(input.value).trim(), 10);
+        if (!Number.isFinite(parsed) || parsed < 1) {
+          syncMaxJobsInput();
+          alert(t("enterNumberRange"));
+          return;
+        }
+        const normalized = Math.min(1000, parsed);
+        if (normalized === dashboardSettings.maxJobsPerSearch) {
+          syncMaxJobsInput();
+          return;
+        }
+        await saveMaxJobsPerSearch(normalized);
+      }
+
+      async function loadDashboardSettings() {
+        await ensureDashboardApiBase();
+        for (const url of dashboardApiUrls("settings")) {
+          try {
+            const r = await fetch(url, { cache: "no-store" });
+            if (!r.ok) continue;
+            const data = await r.json();
+            applyDashboardSettings(data);
+            return;
+          } catch {
+            /* next */
+          }
+        }
+      }
+
+      async function saveMaxJobsPerSearch(value) {
+        if (savingMaxJobs) return;
+        const parsed = Number.parseInt(String(value), 10);
+        if (!Number.isFinite(parsed) || parsed < 1) return;
+        await ensureDashboardApiBase();
+        if (!canPostToDashboardApi() && !dashboardServerBase) {
+          alert(t("settingsOnlyViaDashboard"));
+          syncMaxJobsInput();
+          return;
+        }
+        savingMaxJobs = true;
+        let lastError = "";
+        try {
+          for (const url of dashboardApiUrls("settings")) {
+            try {
+              const r = await fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(buildSettingsPostBody({ maxJobsPerSearch: parsed })),
+              });
+              const payload = await r.json().catch(() => ({}));
+              if (!r.ok) {
+                lastError = formatSettingsError(payload.message || payload.error || t("serverError", { status: r.status }));
+                continue;
+              }
+              applyDashboardSettings(payload.settings || { maxJobsPerSearch: parsed });
+              showConsoleBarMessage(t("maxJobsSaved", { n: dashboardSettings.maxJobsPerSearch }));
+              return;
+            } catch (e) {
+              lastError = String(e?.message || e);
+            }
+          }
+          alert(lastError || t("settingSaveFailed"));
+          syncMaxJobsInput();
+        } finally {
+          savingMaxJobs = false;
+        }
+      }
+
+      function setupLauncherSettings() {
+        const row = document.getElementById("launcherSettingsRow");
+        if (!row) return;
+        if (!canPostToDashboardApi()) {
+          row.hidden = true;
+          return;
+        }
+        row.hidden = false;
+        syncMaxJobsInput();
+        const input = document.getElementById("maxJobsPerSearch");
+        input?.addEventListener("blur", () => {
+          commitMaxJobsInput();
+        });
+        input?.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            input.blur();
+          }
+        });
+      }
+
+      function setCustomSearchFormParams(params) {
+        const urlEl = document.getElementById("customSearchUrl");
+        const nameEl = document.getElementById("customSearchDisplayName");
+        const url = String(params?.url || "").trim();
+        const title = String(params?.title || "").trim();
+        if (urlEl) urlEl.value = url;
+        if (nameEl) nameEl.value = title;
+        updateCustomSearchPreview();
+      }
+
+      function setCustomSearchEditMode(scenarioId) {
+        editingScenarioId = scenarioId || null;
+        const addBtn = document.getElementById("customSearchAdd");
+        const cancelBtn = document.getElementById("customSearchCancel");
+        if (addBtn) addBtn.textContent = editingScenarioId ? t("save") : t("add");
+        if (cancelBtn) cancelBtn.hidden = !editingScenarioId;
+      }
+
+      function resetCustomSearchForm() {
+        setCustomSearchFormParams({ url: "", title: "" });
+        setCustomSearchEditMode(null);
+      }
+
+      function beginEditScenario(scenario) {
+        if (!isCustomScenario(scenario)) return;
+        applyLauncherMenuOpen(true);
+        setCustomSearchFormParams({
+          url: scenario.url || "",
+          title: scenarioDisplayTitle(scenario) || "",
+        });
+        setCustomSearchEditMode(scenario.id);
+        document.getElementById("customSearchUrl")?.focus();
+        document.getElementById("launcherAddForm")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+
+      async function deleteScenario(scenario) {
+        if (!isCustomScenario(scenario)) return;
+        if (
+          !confirm(t("deleteSearchConfirm", { name: scenario.title || scenario.id }))
+        ) {
+          return;
+        }
+        await ensureDashboardApiBase();
+        if (!canPostToDashboardApi() && !dashboardServerBase) {
+          alert(t("deleteOnlyViaDashboard"));
+          return;
+        }
+        let lastError = "";
+        for (const url of dashboardApiUrls("scenarios/delete")) {
+          try {
+            const r = await fetch(url, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ id: scenario.id }),
+            });
+            const payload = await r.json().catch(() => ({}));
+            if (!r.ok) {
+              lastError =
+                payload.message ||
+                (payload.error === "builtin_scenario"
+                  ? t("builtinCannotDelete")
+                  : payload.error === "not_found"
+                    ? t("scenarioNotFound")
+                    : t("serverError", { status: r.status }));
+              continue;
+            }
+            if (editingScenarioId === scenario.id) {
+              resetCustomSearchForm();
+            }
+            await reloadLauncherScenarios();
+            showConsoleBarMessage(t("deleted", { name: scenario.title || scenario.id }));
+            return;
+          } catch (e) {
+            lastError = String(e?.message || e);
+          }
+        }
+        alert(lastError || t("scenarioDeleteFailed"));
+      }
+
+      async function renameScenario(scenario) {
+        if (!isCustomScenario(scenario)) return;
+        const currentName = scenarioDisplayTitle(scenario) || scenario.id;
+        const next = prompt(t("renamePrompt"), currentName);
+        if (next === null) return;
+        const title = String(next).trim();
+        if (!title) return;
+        if (title === currentName) return;
+
+        await ensureDashboardApiBase();
+        if (!canPostToDashboardApi() && !dashboardServerBase) {
+          alert(t("saveOnlyViaDashboard"));
+          return;
+        }
+        let lastError = "";
+        for (const url of dashboardApiUrls("scenarios/rename")) {
+          try {
+            const r = await fetch(url, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ id: scenario.id, title }),
+            });
+            const payload = await r.json().catch(() => ({}));
+            if (!r.ok) {
+              lastError =
+                payload.message ||
+                (payload.error === "builtin_scenario"
+                  ? t("builtinCannotDelete")
+                  : payload.error === "not_found"
+                    ? t("scenarioNotFound")
+                    : payload.error === "missing_title"
+                      ? t("renamePrompt", { name: currentName })
+                      : t("serverError", { status: r.status }));
+              continue;
+            }
+            await reloadLauncherScenarios();
+            showConsoleBarMessage(t("renamed", { name: title }));
+            return;
+          } catch (e) {
+            lastError = String(e?.message || e);
+          }
+        }
+        alert(lastError || t("scenarioRenameFailed"));
+      }
+
+      async function saveCustomSearchScenario() {
+        const rawUrl = readCustomSearchUrl();
+        if (!rawUrl) {
+          alert(t("missingSearchUrl"));
+          document.getElementById("customSearchUrl")?.focus();
+          return;
+        }
+        if (!canonicalizeLinkedInJobsSearchUrl(rawUrl)) {
+          alert(t("invalidSearchUrl"));
+          document.getElementById("customSearchUrl")?.focus();
+          return;
+        }
+        const parsed = parseLinkedInSearchUrlClient(rawUrl);
+        const displayName = readCustomSearchDisplayName();
+        await ensureDashboardApiBase();
+        if (!canPostToDashboardApi() && !dashboardServerBase) {
+          alert(t("saveOnlyViaDashboard"));
+          return;
+        }
+        const btn = document.getElementById("customSearchAdd");
+        if (btn) btn.disabled = true;
+        let lastError = "";
+        const endpoint = editingScenarioId ? "scenarios/update" : "scenarios/add";
+        const body = editingScenarioId
+          ? { id: editingScenarioId, url: rawUrl.trim(), ...(displayName ? { title: displayName } : {}) }
+          : { url: rawUrl.trim(), ...(displayName ? { title: displayName } : {}) };
+        try {
+          for (const url of dashboardApiUrls(endpoint)) {
+            try {
+              const r = await fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body),
+              });
+              const payload = await r.json().catch(() => ({}));
+              if (!r.ok) {
+                lastError =
+                  payload.message ||
+                  payload.error ||
+                  (payload.error === "missing_keywords"
+                    ? t("missingKeywords")
+                    : payload.error === "invalid_url"
+                      ? t("invalidSearchUrl")
+                      : payload.error === "not_found"
+                      ? t("scenarioNotFound")
+                      : t("serverError", { status: r.status }));
+                continue;
+              }
+              const wasEdit = Boolean(editingScenarioId);
+              resetCustomSearchForm();
+              await reloadLauncherScenarios();
+              showConsoleBarMessage(
+                wasEdit
+                  ? t("updated", { name: payload.scenario?.title || parsed?.keywords || rawUrl })
+                  : t("saved", { name: payload.scenario?.title || parsed?.keywords || rawUrl }),
+              );
+              return;
+            } catch (e) {
+              lastError = String(e?.message || e);
+            }
+          }
+          alert(lastError || t("scenarioSaveFailed"));
+        } finally {
+          if (btn) btn.disabled = false;
+        }
+      }
+
+      function setupCustomSearchForm() {
+        const form = document.getElementById("launcherAddForm");
+        if (!form) return;
+        if (!canPostToDashboardApi()) {
+          form.hidden = true;
+          return;
+        }
+        form.hidden = false;
+        for (const id of ["customSearchUrl", "customSearchDisplayName"]) {
+          document.getElementById(id)?.addEventListener("input", updateCustomSearchPreview);
+          document.getElementById(id)?.addEventListener("change", updateCustomSearchPreview);
+        }
+        updateCustomSearchPreview();
+        document.getElementById("customSearchAdd")?.addEventListener("click", () => {
+          saveCustomSearchScenario();
+        });
+        document.getElementById("customSearchCancel")?.addEventListener("click", () => {
+          resetCustomSearchForm();
+        });
+        document.getElementById("customSearchTest")?.addEventListener("click", () => {
+          startCustomSearch("test");
+        });
+        document.getElementById("customSearchUrl")?.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            saveCustomSearchScenario();
+          }
+        });
+      }
+
+      function renderLauncherScenarios() {
+        const container = document.getElementById("launcherScenarios");
+        const unavailable = document.getElementById("launcherUnavailable");
+        if (!container) return;
+        container.innerHTML = "";
+
+        if (!canPostToDashboardApi()) {
+          if (unavailable) {
+            unavailable.hidden = false;
+            unavailable.textContent = t("menuOnlyViaDashboard");
+          }
+          return;
+        }
+        if (unavailable) {
+          unavailable.hidden = true;
+        }
+
+        for (const s of launcherScenarios) {
+          const row = document.createElement("div");
+          row.className = "scenario-row";
+
+          const text = document.createElement("div");
+          text.className = "scenario-text";
+          const title = document.createElement("p");
+          title.className = "scenario-title";
+          title.textContent = scenarioDisplayTitle(s);
+          const desc = document.createElement("p");
+          desc.className = "scenario-desc";
+          desc.textContent = scenarioDisplayDescription(s);
+          text.appendChild(title);
+          text.appendChild(desc);
+
+          const actions = document.createElement("div");
+          actions.className = "scenario-actions";
+
+          const btnExec = document.createElement("button");
+          btnExec.type = "button";
+          btnExec.className = "scenario-btn scenario-btn-execute";
+          btnExec.textContent = t("execute");
+          btnExec.addEventListener("click", () => startScenario(s.id, "execute"));
+
+          const btnTest = document.createElement("button");
+          btnTest.type = "button";
+          btnTest.className = "scenario-btn scenario-btn-test";
+          btnTest.textContent = t("test");
+          btnTest.addEventListener("click", () => startScenario(s.id, "test"));
+
+          actions.appendChild(btnExec);
+          actions.appendChild(btnTest);
+
+          if (isCustomScenario(s)) {
+            const btnRename = document.createElement("button");
+            btnRename.type = "button";
+            btnRename.className = "scenario-btn scenario-btn-rename";
+            btnRename.textContent = t("rename");
+            btnRename.addEventListener("click", () => renameScenario(s));
+
+            const btnEdit = document.createElement("button");
+            btnEdit.type = "button";
+            btnEdit.className = "scenario-btn scenario-btn-edit";
+            btnEdit.textContent = t("edit");
+            btnEdit.addEventListener("click", () => beginEditScenario(s));
+
+            const btnDelete = document.createElement("button");
+            btnDelete.type = "button";
+            btnDelete.className = "scenario-btn scenario-btn-delete";
+            btnDelete.textContent = t("delete");
+            btnDelete.addEventListener("click", () => deleteScenario(s));
+
+            actions.appendChild(btnRename);
+            actions.appendChild(btnEdit);
+            actions.appendChild(btnDelete);
+          }
+
+          row.appendChild(text);
+          row.appendChild(actions);
+          container.appendChild(row);
+        }
+      }
+
+      function setupLauncherGlobalActions() {
+        const row = document.getElementById("launcherGlobalActions");
+        if (!row) return;
+        row.hidden = !canPostToDashboardApi();
+
+        document.getElementById("runAllBtn")?.addEventListener("click", () => {
+          postRunRequest({ action: "run-all" }, "execute");
+        });
+        document.getElementById("refreshJobsBtn")?.addEventListener("click", () => {
+          postRunRequest({ action: "refresh" }, "execute");
+        });
+      }
+
+      async function initLauncher() {
+        const toggle = document.getElementById("launcherToggle");
+        if (!toggle) return;
+
+        toggle.addEventListener("click", () => {
+          applyLauncherMenuOpen(!launcherMenuOpen);
+        });
+
+        await ensureDashboardApiBase();
+        outer: for (const endpoint of ["scenarios", "pipelines"]) {
+          for (const url of dashboardApiUrls(endpoint)) {
+            try {
+              const r = await fetch(url, { cache: "no-store" });
+              if (!r.ok) continue;
+              const data = await r.json();
+              if (data?.apiBase) {
+                dashboardServerBase = String(data.apiBase).replace(/\/$/, "");
+              }
+              if (data?.settings) {
+                applyDashboardSettings(data.settings);
+              }
+              if (Array.isArray(data.scenarios) && data.scenarios.length) {
+                launcherScenarios = data.scenarios;
+                break outer;
+              }
+            } catch {
+              /* next */
+            }
+          }
+        }
+
+        if (!launcherScenarios.length) {
+          launcherScenarios = FALLBACK_SCENARIOS;
+        }
+
+        let initialOpen = false;
+        try {
+          const saved = sessionStorage.getItem(LAUNCHER_OPEN_STORAGE_KEY);
+          if (saved === "1") initialOpen = true;
+        } catch {
+          /* ignore */
+        }
+        applyLauncherMenuOpen(initialOpen);
+        await loadDashboardSettings();
+        setupLauncherSettings();
+        setupLauncherGlobalActions();
+        setupCustomSearchForm();
+        setupConsoleLog();
+        renderLauncherScenarios();
+        await pollLauncherRunStatus();
+      }
+
+      /** То же правило, что extractJobKey на сервере (LinkedIn numeric id или полный URL). */
+      function clientJobKey(job) {
+        const link = String(job?.link || "");
+        const m = link.match(/\/jobs\/view\/(\d+)/i);
+        return m ? m[1] : link.trim();
+      }
+
+      function readAppliedLocalMap() {
+        try {
+          const raw = localStorage.getItem(APPLIED_STORAGE_KEY);
+          const parsed = JSON.parse(raw || "{}");
+          return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+        } catch {
+          return {};
+        }
+      }
+
+      function writeAppliedLocal(jobKey, applied) {
+        if (!jobKey) return;
+        const map = readAppliedLocalMap();
+        if (applied) {
+          map[jobKey] = { applied_at: new Date().toISOString() };
+        } else {
+          delete map[jobKey];
+        }
+        localStorage.setItem(APPLIED_STORAGE_KEY, JSON.stringify(map));
+      }
+
+      function readNotInterestedLocalMap() {
+        try {
+          const raw = localStorage.getItem(NOT_INTERESTED_STORAGE_KEY);
+          const parsed = JSON.parse(raw || "{}");
+          return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+        } catch {
+          return {};
+        }
+      }
+
+      function writeNotInterestedLocal(jobKey, notInterested) {
+        if (!jobKey) return;
+        const map = readNotInterestedLocalMap();
+        if (notInterested) {
+          map[jobKey] = { not_interested_at: new Date().toISOString() };
+        } else {
+          delete map[jobKey];
+        }
+        localStorage.setItem(NOT_INTERESTED_STORAGE_KEY, JSON.stringify(map));
+      }
+
+      function syncAppliedFromJobsToLocal(jobs) {
+        const map = readAppliedLocalMap();
+        let changed = false;
+        for (const job of jobs || []) {
+          const key = clientJobKey(job);
+          if (key && job.applied === true && !map[key]) {
+            map[key] = { applied_at: job.applied_at || new Date().toISOString() };
+            changed = true;
+          }
+        }
+        if (changed) {
+          localStorage.setItem(APPLIED_STORAGE_KEY, JSON.stringify(map));
+        }
+      }
+
+      function syncNotInterestedFromJobsToLocal(jobs) {
+        const map = readNotInterestedLocalMap();
+        let changed = false;
+        for (const job of jobs || []) {
+          const key = clientJobKey(job);
+          if (key && job.not_interested === true && !map[key]) {
+            map[key] = { not_interested_at: job.not_interested_at || new Date().toISOString() };
+            changed = true;
+          }
+        }
+        if (changed) {
+          localStorage.setItem(NOT_INTERESTED_STORAGE_KEY, JSON.stringify(map));
+        }
+      }
+
+      function mergeAppliedIntoJobList(jobs) {
+        const local = readAppliedLocalMap();
+        return (jobs || []).map((job) => {
+          const key = clientJobKey(job);
+          const fromLocal = key ? local[key] : null;
+          const applied = job.applied === true || Boolean(fromLocal);
+          return {
+            ...job,
+            applied,
+            applied_at: fromLocal?.applied_at || job.applied_at || "",
+          };
+        });
+      }
+
+      function mergeNotInterestedIntoJobList(jobs) {
+        const local = readNotInterestedLocalMap();
+        return (jobs || []).map((job) => {
+          const key = clientJobKey(job);
+          const fromLocal = key ? local[key] : null;
+          const notInterested = job.not_interested === true || Boolean(fromLocal);
+          return {
+            ...job,
+            not_interested: notInterested,
+            not_interested_at: fromLocal?.not_interested_at || job.not_interested_at || "",
+          };
+        });
+      }
+
+      function isJobApplied(job) {
+        const key = clientJobKey(job);
+        if (!key) return false;
+        if (job.applied === true) return true;
+        return Boolean(readAppliedLocalMap()[key]);
+      }
+
+      function isJobNotInterested(job) {
+        const key = clientJobKey(job);
+        if (!key) return false;
+        if (job.not_interested === true) return true;
+        return Boolean(readNotInterestedLocalMap()[key]);
+      }
+
+      function updateJobCardClasses(card, applied, notInterested) {
+        if (!card) return;
+        card.classList.toggle("card-applied", applied);
+        card.classList.toggle("card-not-interested", !applied && notInterested);
+      }
+
+      async function loadData() {
+        try {
+          resolvedDashboardJobsUrl = "";
+          jobsLoadedFromProjectApi = false;
+          let data = null;
+
+          for (const url of dashboardApiUrls("dashboard-jobs")) {
+            try {
+              const response = await fetch(url, { cache: "no-store" });
+              if (!response.ok) {
+                continue;
+              }
+              const parsed = await response.json();
+              if (parsed && Array.isArray(parsed.jobs)) {
+                data = parsed;
+                jobsLoadedFromProjectApi = true;
+                resolvedDashboardJobsUrl = url;
+                if (url.startsWith("http")) {
+                  sessionStorage.setItem(API_ORIGIN_STORAGE_KEY, new URL(url).origin);
+                } else if (isDashboardServerPage()) {
+                  sessionStorage.removeItem(API_ORIGIN_STORAGE_KEY);
+                }
+                break;
+              }
+            } catch {
+              /* пробуем следующий URL */
+            }
+          }
+
+          if (!data) {
+            jobsLoadedFromProjectApi = false;
+            let response = await fetch("/reports/dashboard-jobs.json", { cache: "no-store" });
+            if (!response.ok) {
+              response = await fetch("/reports/today-jobs.json", { cache: "no-store" });
+            }
+            if (!response.ok) {
+              throw new Error(t("dashboardJsonMissing"));
+            }
+            data = await response.json();
+          }
+
+          syncAppliedFromJobsToLocal(data.jobs);
+          syncNotInterestedFromJobsToLocal(data.jobs);
+          data.jobs = mergeNotInterestedIntoJobList(mergeAppliedIntoJobList(data.jobs));
+          render(data);
+        } catch (error) {
+          jobsLoadedFromProjectApi = false;
+          resolvedDashboardJobsUrl = "";
+          document.getElementById("status").textContent = String(error.message || error);
+          document.getElementById("count").textContent = "";
+          document.getElementById("searchBar").hidden = true;
+          document.getElementById("toolbar").hidden = true;
+          document.getElementById("jobs").innerHTML = "";
+        }
+      }
+
+      function render(data) {
+        lastData = data;
+        const status = document.getElementById("status");
+        const count = document.getElementById("count");
+        const toolbar = document.getElementById("toolbar");
+
+        const reportLabel =
+          data.aggregate === "all-raw-reports"
+            ? t("allRawReports")
+            : t("collectionDate", { date: data.generated_on_date ?? data.date ?? "—" });
+        status.textContent = t("statusLine", {
+          reportLabel,
+          count: data.reports_processed.length,
+        });
+        const n = data.jobs_count ?? data.jobs_count_today ?? (data.jobs || []).length;
+        lastJobsTotal = n;
+        count.textContent = t("uniqueJobs", { n });
+        toolbar.hidden = false;
+        setupSearchBar();
+        buildToolbar(data);
+        applyView();
+      }
+
+      function buildToolbar(data) {
+        const toolbar = document.getElementById("toolbar");
+        const types = collectWorkTypes(data.jobs);
+        const filterOpts = [`<option value="__all__">${escapeHtml(t("allWorkTypes"))}</option>`]
+          .concat(types.map((wt) => `<option value="${escapeAttr(wt)}">${escapeHtml(wt)}</option>`))
+          .join("");
+        const filterSel = `<select id="workFilter" aria-label="${escapeAttr(t("workType"))}">${filterOpts}</select>`;
+        const aiSel = `<select id="aiVerdictFilter" aria-label="${escapeAttr(t("aiVerdictLabel"))}">
+          <option value="__all__">${escapeHtml(t("aiVerdictAll"))}</option>
+          <option value="yes">${escapeHtml(t("aiVerdictYes"))}</option>
+          <option value="no">${escapeHtml(t("aiVerdictNo"))}</option>
+          <option value="maybe">${escapeHtml(t("aiVerdictMaybe"))}</option>
+          <option value="unknown">${escapeHtml(t("aiVerdictUnknown"))}</option>
+        </select>`;
+        const sortSel = `<select id="reportSort" aria-label="${escapeAttr(t("reportSortLabel"))}">
+          <option value="report_desc">${escapeHtml(t("reportSortDesc"))}</option>
+          <option value="report_asc">${escapeHtml(t("reportSortAsc"))}</option>
+          <option value="default">${escapeHtml(t("reportSortDefault"))}</option>
+        </select>`;
+        const tagCheckboxes = mandatoryTags
+          .map(
+            (tag) =>
+              `<label><input type="checkbox" id="${escapeAttr(tag.id)}" data-tag-filter="" /> ${escapeHtml(tag.label)}</label>`,
+          )
+          .join("");
+        toolbar.innerHTML = `
+          <div class="toolbar-groups">
+            <section class="toolbar-group toolbar-group-filters" aria-label="${escapeAttr(t("listFilters"))}">
+              <div class="toolbar-group-head">
+                <div class="toolbar-group-title">${escapeHtml(t("listFilters"))}</div>
+              </div>
+              <div class="toolbar-group-body">
+                <label><input type="checkbox" id="todayOnlyFilter" /> ${escapeHtml(t("todayOnly"))}</label>
+                <label>${escapeHtml(t("reportTime"))} ${sortSel}</label>
+                <label>${escapeHtml(t("workType"))} ${filterSel}</label>
+                <label>${aiSel}</label>
+              </div>
+            </section>
+            <section class="toolbar-group toolbar-group-tags" aria-label="${escapeAttr(t("mandatoryTags"))}">
+              <div class="toolbar-group-head">
+                <div class="toolbar-group-title">${escapeHtml(t("mandatoryTags"))}</div>
+                <span class="toolbar-group-subtitle">${escapeHtml(t("mandatoryTagsHint"))}</span>
+              </div>
+              <div class="toolbar-group-body tag-filters-row">
+                <button type="button" id="tagFiltersConfigureBtn" class="btn-tag-config">${escapeHtml(t("configure"))}</button>
+                <div class="tag-controls">${tagCheckboxes}</div>
+              </div>
+            </section>
+            <section class="toolbar-group toolbar-group-actions" aria-label="${escapeAttr(t("actions"))}">
+              <div class="toolbar-group-head">
+                <div class="toolbar-group-title">${escapeHtml(t("actions"))}</div>
+              </div>
+              <div class="toolbar-group-body">
+                <button type="button" id="removeAllJobsBtn" class="btn-remove-all" title="${escapeAttr(t("removeAllTitle"))}" ${(data.jobs || []).length === 0 ? "disabled" : ""}>${escapeHtml(t("removeAllJobs"))}</button>
+              </div>
+            </section>
+          </div>
+        `;
+        document.getElementById("todayOnlyFilter").addEventListener("change", applyView);
+        document.getElementById("reportSort").addEventListener("change", applyView);
+        document.getElementById("workFilter").addEventListener("change", applyView);
+        document.getElementById("aiVerdictFilter").addEventListener("change", applyView);
+        for (const cb of toolbar.querySelectorAll("[data-tag-filter]")) {
+          cb.addEventListener("change", applyView);
+        }
+        document.getElementById("tagFiltersConfigureBtn")?.addEventListener("click", openTagFiltersDialog);
+        document.getElementById("removeAllJobsBtn").addEventListener("click", removeAllJobs);
+      }
+
+      let searchBarListenersBound = false;
+
+      function setupSearchBar() {
+        const searchBar = document.getElementById("searchBar");
+        if (searchBar) {
+          searchBar.hidden = false;
+        }
+        if (searchBarListenersBound) {
+          return;
+        }
+        searchBarListenersBound = true;
+        document.getElementById("keywordSearch")?.addEventListener("input", applyView);
+        document.getElementById("appliedStatusFilter")?.addEventListener("change", applyView);
+      }
+
+      async function removeAllJobs() {
+        if (!lastData) return;
+        const total = (lastData.jobs || []).length;
+        if (total === 0) {
+          return;
+        }
+        if (!canPostToDashboardApi()) {
+          alert(t("removeUnavailable"));
+          return;
+        }
+        if (
+          !confirm(t("removeAllConfirm", { total }))
+        ) {
+          return;
+        }
+        const btn = document.getElementById("removeAllJobsBtn");
+        btn.disabled = true;
+        try {
+          const r = await fetch(removeAllJobsFetchUrl(), {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: "{}",
+          });
+          let payload = {};
+          try {
+            payload = await r.json();
+          } catch {
+            payload = {};
+          }
+          if (r.status === 404) {
+            throw new Error("__NO_REMOVE_ALL_ROUTE");
+          }
+          if (!r.ok) {
+            throw new Error(payload.error || t("serverError", { status: r.status }));
+          }
+          localStorage.removeItem(APPLIED_STORAGE_KEY);
+          localStorage.removeItem(NOT_INTERESTED_STORAGE_KEY);
+          lastData.jobs = [];
+          lastData.jobs_count = 0;
+          lastJobsTotal = 0;
+          buildToolbar(lastData);
+          applyView();
+        } catch (e) {
+          const msg = String(e?.message || e);
+          if (msg === "__NO_REMOVE_ALL_ROUTE") {
+            alert(t("restartForRemoveAll"));
+          } else if (msg.includes("Failed to fetch") || msg.includes("NetworkError")) {
+            alert(t("apiUnreachable"));
+          } else {
+            alert(msg);
+          }
+        } finally {
+          btn.disabled = false;
+        }
+      }
+
+      function dashboardFiltersActive() {
+        const todayOnly = document.getElementById("todayOnlyFilter")?.checked;
+        const work = document.getElementById("workFilter")?.value || "__all__";
+        const ai = document.getElementById("aiVerdictFilter")?.value || "__all__";
+        const appliedStatus = document.getElementById("appliedStatusFilter")?.value || "__all__";
+        const kw = (document.getElementById("keywordSearch")?.value ?? "").trim();
+        const anyTag = mandatoryTags.some((tag) => document.getElementById(tag.id)?.checked);
+        return (
+          todayOnly ||
+          work !== "__all__" ||
+          ai !== "__all__" ||
+          appliedStatus !== "__all__" ||
+          kw !== "" ||
+          anyTag
+        );
+      }
+
+      function updateJobsCountLine(filteredCount) {
+        const countEl = document.getElementById("count");
+        if (!countEl) return;
+        const total = lastJobsTotal;
+        if (dashboardFiltersActive()) {
+          countEl.textContent = t("uniqueJobsFiltered", { total, filtered: filteredCount });
+        } else {
+          countEl.textContent = t("uniqueJobs", { n: total });
+        }
+      }
+
+      function collectWorkTypes(jobs) {
+        const set = new Set();
+        for (const job of jobs || []) {
+          set.add(job.work_type || "Unknown");
+        }
+        return [...set].sort((a, b) => (WORK_TYPE_ORDER[a] ?? 99) - (WORK_TYPE_ORDER[b] ?? 99));
+      }
+
+      /** Имя raw-файла (как в ссылках «Raw: …-raw.md»). */
+      function jobRawReportBasename(job) {
+        const vs = Array.isArray(job.verification_sources) ? job.verification_sources[0] : null;
+        const fromVs = vs && String(vs.raw_file || "").trim();
+        const s = String(fromVs || job.source_file || job.raw_report_path_posix || "");
+        return s.split(/[/\\]/).pop()?.trim() || "";
+      }
+
+      function getTodayLocalDateString() {
+        const d = new Date();
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        return `${y}-${m}-${day}`;
+      }
+
+      /** Дата сбора из префикса `YYYY-MM-DD_…` в имени raw-отчёта. */
+      function jobReportDateYmd(job) {
+        const basename = jobRawReportBasename(job);
+        const m = String(basename).match(/^(\d{4}-\d{2}-\d{2})_/);
+        return m ? m[1] : "";
+      }
+
+      function jobFromTodayReport(job) {
+        const reportDate = jobReportDateYmd(job);
+        return reportDate !== "" && reportDate === getTodayLocalDateString();
+      }
+
+      /** Префикс `YYYY-MM-DD_HH-MM-SS_…` из имени отчёта → ms (локальная дата/время). */
+      function parseRawReportStemMs(filename) {
+        const m = String(filename).match(
+          /^(\d{4})-(\d{2})-(\d{2})_(\d{2})-(\d{2})-(\d{2})_/,
+        );
+        if (!m) return null;
+        const y = Number(m[1]);
+        const mo = Number(m[2]);
+        const d = Number(m[3]);
+        const hh = Number(m[4]);
+        const mi = Number(m[5]);
+        const ss = Number(m[6]);
+        const t = new Date(y, mo - 1, d, hh, mi, ss);
+        const ms = t.getTime();
+        return Number.isFinite(ms) ? ms : null;
+      }
+
+      /** `report_desc` — свежие отчёты (напр. сегодняшний сбор) сверху. */
+      function sortJobsByReportTime(list, mode) {
+        if (mode !== "report_desc" && mode !== "report_asc") {
+          return list;
+        }
+        const desc = mode === "report_desc";
+        const infLo = Number.NEGATIVE_INFINITY;
+        const infHi = Number.POSITIVE_INFINITY;
+        return [...list].sort((a, b) => {
+          const ba = jobRawReportBasename(a);
+          const bb = jobRawReportBasename(b);
+          const ta = parseRawReportStemMs(ba);
+          const tb = parseRawReportStemMs(bb);
+          const va =
+            ta == null || !Number.isFinite(ta)
+              ? desc
+                ? infLo
+                : infHi
+              : ta;
+          const vb =
+            tb == null || !Number.isFinite(tb)
+              ? desc
+                ? infLo
+                : infHi
+              : tb;
+          const cmp = desc ? vb - va : va - vb;
+          if (Number.isFinite(cmp) && cmp !== 0) {
+            return cmp;
+          }
+          return ba.localeCompare(bb) || String(a.link || "").localeCompare(String(b.link || ""));
+        });
+      }
+
+      function applyView() {
+        if (!lastData) return;
+        const workFilter = document.getElementById("workFilter")?.value || "__all__";
+        const aiFilter = document.getElementById("aiVerdictFilter")?.value || "__all__";
+        const appliedStatusFilter =
+          document.getElementById("appliedStatusFilter")?.value || "__all__";
+        const kwRaw = document.getElementById("keywordSearch")?.value ?? "";
+        const sortMode = document.getElementById("reportSort")?.value || "report_desc";
+        const todayOnly = document.getElementById("todayOnlyFilter")?.checked;
+        let list = [...(lastData.jobs || [])];
+        if (todayOnly) {
+          list = list.filter((j) => jobFromTodayReport(j));
+        }
+        if (workFilter !== "__all__") {
+          list = list.filter((j) => (j.work_type || "Unknown") === workFilter);
+        }
+        if (aiFilter !== "__all__") {
+          list = list.filter((j) => matchAiVerdict(j, aiFilter));
+        }
+        if (appliedStatusFilter === "applied") {
+          list = list.filter((j) => isJobApplied(j));
+        } else if (appliedStatusFilter === "not_applied") {
+          list = list.filter((j) => !isJobApplied(j) && !isJobNotInterested(j));
+        } else if (appliedStatusFilter === "not_interested") {
+          list = list.filter((j) => isJobNotInterested(j));
+        }
+        const kw = kwRaw.trim();
+        if (kw) {
+          const terms = kw.toLowerCase().split(/\s+/).filter(Boolean);
+          list = list.filter((j) => {
+            const h = jobKeywordHaystack(j);
+            return terms.some((t) => h.includes(t));
+          });
+        }
+        for (const tag of mandatoryTags) {
+          if (!document.getElementById(tag.id)?.checked) continue;
+          list = list.filter((j) => jobMatchesTagFilter(j, tag));
+        }
+        list = sortJobsByReportTime(list, sortMode);
+        updateJobsCountLine(list.length);
+        renderJobCards(list);
+      }
+
+      function matchAiVerdict(job, aiFilter) {
+        const v = job.ai_verdict;
+        if (aiFilter === "unknown") {
+          return v !== "yes" && v !== "no" && v !== "maybe";
+        }
+        return v === aiFilter;
+      }
+
+      function jobKeywordHaystack(job) {
+        const parts = [
+          job.title,
+          job.company,
+          job.location,
+          job.short_summary,
+          job.description_preview,
+          job.ai_reason || job.ai_reason_ru,
+          ...(Array.isArray(job.ai_keywords) ? job.ai_keywords : []),
+          ...(Array.isArray(job.tags) ? job.tags : []),
+        ];
+        return parts.join(" ").toLowerCase();
+      }
+
+      function jobMatchesTagFilter(job, tag) {
+        const h = jobKeywordHaystack(job);
+        const label = String(tag?.label || "").trim().toLowerCase();
+        if (!label) return false;
+        if (label === "ai") {
+          return /\bai\b/.test(h) || h.includes("artificial intelligence");
+        }
+        return h.includes(label);
+      }
+
+      function formatJobDescriptionText(job, text) {
+        const company = String(job.company || "").trim() || t("companyUnknown");
+        const summary = String(text || "").trim() || t("summaryMissing");
+        const companyPrefix = `${company} — `;
+        if (summary.toLowerCase().startsWith(company.toLowerCase())) {
+          return summary;
+        }
+        return companyPrefix + summary;
+      }
+
+      function formatJobDescription(job) {
+        return formatJobDescriptionText(job, job.short_summary);
+      }
+
+      function formatJobDescriptionFull(job) {
+        const preview = String(job.description_preview || "").trim();
+        if (preview) {
+          return formatJobDescriptionText(job, preview);
+        }
+        return formatJobDescription(job);
+      }
+
+      function buildJobSummaryHtml(job) {
+        const short = formatJobDescription(job);
+        const full = formatJobDescriptionFull(job);
+        const shortEsc = escapeHtml(short);
+        if (full === short) {
+          return `<p class="summary">${shortEsc}</p>`;
+        }
+        const fullEsc = escapeHtml(full);
+        return `<p class="summary summary-toggle" data-summary-toggle role="button" tabindex="0" aria-expanded="false" title="${escapeAttr(t("summaryExpand"))}">
+            <span class="summary-short">${shortEsc}</span>
+            <span class="summary-full" hidden>${fullEsc}</span>
+          </p>`;
+      }
+
+      function toggleJobSummary(el) {
+        const short = el.querySelector(".summary-short");
+        const full = el.querySelector(".summary-full");
+        if (!short || !full) return;
+        const expanded = !el.classList.contains("is-expanded");
+        el.classList.toggle("is-expanded", expanded);
+        short.hidden = expanded;
+        full.hidden = !expanded;
+        el.setAttribute("aria-expanded", expanded ? "true" : "false");
+        el.title = t(expanded ? "summaryCollapse" : "summaryExpand");
+      }
+
+      function renderJobCards(jobs) {
+        const container = document.getElementById("jobs");
+        container.innerHTML = "";
+
+        for (const job of jobs) {
+          const card = document.createElement("article");
+
+          const safeType = job.work_type || "Unknown";
+          const safeTitle = job.title || t("untitled");
+          const safeCompany = String(job.company || "").trim() || t("companyUnknown");
+          const aiBlock = formatAiBlock(job);
+
+          const dk = clientJobKey(job);
+          const applied = isJobApplied(job);
+          const notInterested = isJobNotInterested(job);
+          const removeBtn =
+            dk !== ""
+              ? `<button type="button" class="btn-remove" data-remove-job="" data-job-key="${escapeAttr(encodeURIComponent(dk))}" title="${escapeAttr(t("removeJobTitle"))}">${escapeHtml(t("removeJob"))}</button>`
+              : "";
+          const appliedToggle =
+            dk !== ""
+              ? `<label class="applied-toggle" title="${escapeAttr(t("appliedTitle"))}">
+                   <input type="checkbox" data-set-applied="" data-job-key="${escapeAttr(encodeURIComponent(dk))}" ${applied ? "checked" : ""} />
+                   ${escapeHtml(t("applied"))}
+                 </label>`
+              : "";
+          const notInterestedToggle =
+            dk !== ""
+              ? `<label class="applied-toggle" title="${escapeAttr(t("notInterestedTitle"))}">
+                   <input type="checkbox" data-set-not-interested="" data-job-key="${escapeAttr(encodeURIComponent(dk))}" ${notInterested ? "checked" : ""} />
+                   ${escapeHtml(t("notInterested"))}
+                 </label>`
+              : "";
+
+          card.className = "card";
+          updateJobCardClasses(card, applied, notInterested);
+
+          card.innerHTML = `
+            <div class="card-head">
+              <div class="card-head-main">
+                <div class="card-title-row">
+                  <h2 class="title">${escapeHtml(safeTitle)}</h2>
+                  ${buildJobOllamaToggle(dk)}
+                </div>
+                ${buildJobOllamaPanel(dk)}
+              </div>
+              <div class="card-actions">
+                ${appliedToggle}
+                ${notInterestedToggle}
+                ${removeBtn}
+              </div>
+            </div>
+            <p class="meta">${escapeHtml(safeCompany)}</p>
+            <p class="ai-line">${aiLineHtml(job)}</p>
+            <p><span class="badge">${escapeHtml(safeType)}</span>${escapeHtml(job.location || "")}</p>
+            ${aiBlock}
+            ${buildJobSummaryHtml(job)}
+            <p><a href="${escapeAttr(job.link || "#")}" target="_blank" rel="noopener noreferrer">${escapeHtml(t("linkedinDetails"))}</a></p>
+            ${buildVerificationBlock(job)}
+          `;
+          container.appendChild(card);
+        }
+        setupJobOllamaHandlers();
+      }
+
+      function buildJobOllamaToggle(jobKeyEnc) {
+        if (!jobKeyEnc || !canPostToDashboardApi()) return "";
+        return `<button type="button" class="btn-ollama-toggle" data-ollama-toggle data-job-key="${escapeAttr(jobKeyEnc)}" aria-expanded="false">
+                ${escapeHtml(t("askOllama"))}
+              </button>`;
+      }
+
+      function buildJobOllamaPanel(jobKeyEnc) {
+        if (!jobKeyEnc || !canPostToDashboardApi()) return "";
+        return `<div class="job-ollama-panel" data-ollama-panel data-job-key="${escapeAttr(jobKeyEnc)}" hidden>
+                <label>${escapeHtml(t("askOllamaLabel"))}</label>
+                <textarea data-ollama-question rows="3" placeholder="${escapeAttr(t("askOllamaPlaceholder"))}"></textarea>
+                <div class="job-ollama-actions">
+                  <button type="button" class="btn-ollama-ask" data-ollama-submit data-job-key="${escapeAttr(jobKeyEnc)}">${escapeHtml(t("askOllamaSubmit"))}</button>
+                </div>
+                <div class="job-ollama-answer" data-ollama-answer hidden></div>
+              </div>`;
+      }
+
+      let jobOllamaHandlersBound = false;
+
+      function setupJobOllamaHandlers() {
+        if (jobOllamaHandlersBound) return;
+        jobOllamaHandlersBound = true;
+        const container = document.getElementById("jobs");
+        if (!container) return;
+
+        container.addEventListener("click", (ev) => {
+          const summaryToggle = ev.target.closest("[data-summary-toggle]");
+          if (summaryToggle) {
+            toggleJobSummary(summaryToggle);
+            return;
+          }
+          const toggle = ev.target.closest("[data-ollama-toggle]");
+          if (toggle) {
+            const panel = toggle.closest(".card")?.querySelector("[data-ollama-panel]");
+            if (!panel) return;
+            const open = panel.hidden;
+            panel.hidden = !open;
+            toggle.setAttribute("aria-expanded", open ? "true" : "false");
+            toggle.textContent = open ? t("askOllamaHide") : t("askOllama");
+            if (open) {
+              panel.querySelector("[data-ollama-question]")?.focus();
+            }
+            return;
+          }
+          const submit = ev.target.closest("[data-ollama-submit]");
+          if (submit) {
+            ev.preventDefault();
+            submitJobOllamaQuestion(submit);
+          }
+        });
+
+        container.addEventListener("keydown", (ev) => {
+          const summaryToggle = ev.target.closest("[data-summary-toggle]");
+          if (!summaryToggle) return;
+          if (ev.key !== "Enter" && ev.key !== " ") return;
+          ev.preventDefault();
+          toggleJobSummary(summaryToggle);
+        });
+      }
+
+      async function submitJobOllamaQuestion(submitBtn) {
+        if (!lastData) return;
+        const enc = submitBtn.getAttribute("data-job-key");
+        if (!enc) return;
+        let jobKey;
+        try {
+          jobKey = decodeURIComponent(enc);
+        } catch {
+          return;
+        }
+        const card = submitBtn.closest(".card");
+        const panel = card?.querySelector("[data-ollama-panel]");
+        const questionEl = panel?.querySelector("[data-ollama-question]");
+        const answerEl = panel?.querySelector("[data-ollama-answer]");
+        const question = String(questionEl?.value || "").trim();
+        if (!question) {
+          questionEl?.focus();
+          return;
+        }
+        const job = (lastData.jobs || []).find((j) => clientJobKey(j) === jobKey);
+        if (!job) return;
+
+        if (!canPostToDashboardApi() && !dashboardServerBase) {
+          alert(t("askOllamaUnavailable"));
+          return;
+        }
+
+        submitBtn.disabled = true;
+        if (answerEl) {
+          answerEl.hidden = false;
+          answerEl.className = "job-ollama-answer is-loading";
+          answerEl.textContent = t("askOllamaLoading");
+        }
+
+        let lastError = t("askOllamaError");
+        try {
+          for (const url of dashboardApiUrls("job-ask")) {
+            try {
+              const r = await fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  job_key: jobKey,
+                  question,
+                  link: job.link || "",
+                }),
+                signal: AbortSignal.timeout(190000),
+              });
+              const payload = await r.json().catch(() => ({}));
+              if (!r.ok) {
+                lastError = payload.message || lastError;
+                continue;
+              }
+              if (answerEl) {
+                answerEl.className = "job-ollama-answer";
+                answerEl.textContent = String(payload.answer || "").trim() || t("askOllamaError");
+              }
+              return;
+            } catch (e) {
+              lastError = String(e?.message || e);
+            }
+          }
+          if (answerEl) {
+            answerEl.className = "job-ollama-answer is-error";
+            answerEl.textContent = lastError;
+          }
+        } finally {
+          submitBtn.disabled = false;
+        }
+      }
+
+      function aiLineHtml(job) {
+        const v = job.ai_verdict;
+        let cls = "badge badge-ai-unknown";
+        let label = t("aiUnknown");
+        if (v === "yes") {
+          cls = "badge badge-ai-yes";
+          label = t("aiYes");
+        } else if (v === "no") {
+          cls = "badge badge-ai-no";
+          label = t("aiNo");
+        } else if (v === "maybe") {
+          cls = "badge badge-ai-maybe";
+          label = t("aiMaybe");
+        }
+        return `<span class="${cls}">${escapeHtml(label)}</span>`;
+      }
+
+      function formatAiBlock(job) {
+        const kws = Array.isArray(job.ai_keywords) ? job.ai_keywords.filter(Boolean) : [];
+        const kwLine =
+          kws.length > 0
+            ? `<p class="ai-kw"><span class="muted">${escapeHtml(t("topics"))}</span> ${escapeHtml(kws.join(", "))}</p>`
+            : "";
+        const aiQuote = String(job.ai_report_quote || "").trim();
+        const aiReason = String(job.ai_reason || job.ai_reason_ru || "").trim();
+        const aiText = aiQuote || aiReason;
+        const reason = aiText
+          ? `<p class="ai-reason"><span class="muted">Ollama:</span> ${escapeHtml(aiText)}</p>`
+          : "";
+        if (!kwLine && !reason) return "";
+        return kwLine + reason;
+      }
+
+      function escapeHtml(value) {
+        return String(value)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#39;");
+      }
+
+      function escapeAttr(value) {
+        return String(value).replaceAll('"', "%22");
+      }
+
+      function buildVerificationBlock(job) {
+        const sources = Array.isArray(job.verification_sources) && job.verification_sources.length > 0
+          ? job.verification_sources
+          : [
+              {
+                raw_file: job.source_file,
+                raw_report_path_posix: job.raw_report_path_posix,
+              },
+            ];
+
+        const items = sources.map((src) => {
+          const rawHref = "/" + normalizeUrlPath(src.raw_report_path_posix || `reports/${src.raw_file || ""}`);
+          const rawLabel = escapeHtml(src.raw_file || rawHref);
+          return `<li><a href="${escapeAttr(rawHref)}">Raw: ${rawLabel}</a>${src.raw_page_title ? ` <span class="muted">(${escapeHtml(src.raw_page_title)})</span>` : ""}</li>`;
+        });
+
+        return `
+          <div class="verify">
+            ${escapeHtml(t("verifySources"))}
+            <ul>${items.join("")}</ul>
+          </div>
+        `;
+      }
+
+      function normalizeUrlPath(value) {
+        return String(value || "").replaceAll("\\", "/").replace(/^\/+/, "");
+      }
+
+      async function postJobStatus(url, body) {
+        const r = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        let payload = {};
+        try {
+          payload = await r.json();
+        } catch {
+          payload = {};
+        }
+        if (r.status === 404) {
+          return { ok: false, notFound: true, payload };
+        }
+        if (!r.ok) {
+          throw new Error(payload.error || t("serverError", { status: r.status }));
+        }
+        return { ok: true, payload };
+      }
+
+      document.getElementById("jobs").addEventListener("change", async (ev) => {
+        const appliedInput = ev.target.closest("input[data-set-applied]");
+        const notInterestedInput = ev.target.closest("input[data-set-not-interested]");
+        const input = appliedInput || notInterestedInput;
+        if (!input || !lastData) return;
+        const enc = input.getAttribute("data-job-key");
+        if (!enc) return;
+        let jobKey;
+        try {
+          jobKey = decodeURIComponent(enc);
+        } catch {
+          return;
+        }
+        const currentJob = (lastData.jobs || []).find((j) => clientJobKey(j) === jobKey) || {};
+        const card = input.closest(".card");
+        const idx = (lastData.jobs || []).findIndex((j) => clientJobKey(j) === jobKey);
+
+        if (appliedInput) {
+          const nextApplied = appliedInput.checked;
+          writeAppliedLocal(jobKey, nextApplied);
+          if (nextApplied) {
+            writeNotInterestedLocal(jobKey, false);
+            const niInput = card?.querySelector("input[data-set-not-interested]");
+            if (niInput) niInput.checked = false;
+          }
+          if (idx >= 0) {
+            lastData.jobs[idx] = {
+              ...lastData.jobs[idx],
+              applied: nextApplied,
+              applied_at: nextApplied ? new Date().toISOString() : "",
+              not_interested: nextApplied ? false : lastData.jobs[idx].not_interested,
+              not_interested_at: nextApplied ? "" : lastData.jobs[idx].not_interested_at,
+            };
+          }
+          updateJobCardClasses(card, nextApplied, nextApplied ? false : isJobNotInterested(lastData.jobs[idx] || {}));
+          if (!canPostToDashboardApi()) return;
+          input.disabled = true;
+          try {
+            const result = await postJobStatus(setAppliedFetchUrl(), {
+              job_key: jobKey,
+              applied: nextApplied,
+              link: currentJob.link || "",
+            });
+            if (result.notFound) {
+              console.warn(
+                "POST /api/set-applied недоступен. Перезапустите npm.cmd run dashboard — отметка сохранена в браузере.",
+              );
+            }
+            if (nextApplied) {
+              await postJobStatus(setNotInterestedFetchUrl(), {
+                job_key: jobKey,
+                not_interested: false,
+                link: currentJob.link || "",
+              }).catch(() => {});
+            }
+          } catch (e) {
+            console.warn(String(e?.message || e));
+          } finally {
+            input.disabled = false;
+          }
+          return;
+        }
+
+        const nextNotInterested = notInterestedInput.checked;
+        writeNotInterestedLocal(jobKey, nextNotInterested);
+        if (nextNotInterested) {
+          writeAppliedLocal(jobKey, false);
+          const apInput = card?.querySelector("input[data-set-applied]");
+          if (apInput) apInput.checked = false;
+        }
+        if (idx >= 0) {
+          lastData.jobs[idx] = {
+            ...lastData.jobs[idx],
+            not_interested: nextNotInterested,
+            not_interested_at: nextNotInterested ? new Date().toISOString() : "",
+            applied: nextNotInterested ? false : lastData.jobs[idx].applied,
+            applied_at: nextNotInterested ? "" : lastData.jobs[idx].applied_at,
+          };
+        }
+        updateJobCardClasses(card, nextNotInterested ? false : isJobApplied(lastData.jobs[idx] || {}), nextNotInterested);
+        if (!canPostToDashboardApi()) return;
+        input.disabled = true;
+        try {
+          const result = await postJobStatus(setNotInterestedFetchUrl(), {
+            job_key: jobKey,
+            not_interested: nextNotInterested,
+            link: currentJob.link || "",
+          });
+          if (result.notFound) {
+            console.warn(
+              "POST /api/set-not-interested недоступен. Перезапустите npm.cmd run dashboard — отметка сохранена в браузере.",
+            );
+          }
+          if (nextNotInterested) {
+            await postJobStatus(setAppliedFetchUrl(), {
+              job_key: jobKey,
+              applied: false,
+              link: currentJob.link || "",
+            }).catch(() => {});
+          }
+        } catch (e) {
+          console.warn(String(e?.message || e));
+        } finally {
+          input.disabled = false;
+        }
+      });
+
+      document.getElementById("jobs").addEventListener("click", async (ev) => {
+        const btn = ev.target.closest("button[data-remove-job]");
+        if (!btn || !lastData) return;
+        const enc = btn.getAttribute("data-job-key");
+        if (!enc) return;
+        let jobKey;
+        try {
+          jobKey = decodeURIComponent(enc);
+        } catch {
+          return;
+        }
+        const currentJob = (lastData.jobs || []).find((j) => clientJobKey(j) === jobKey) || {};
+        if (!confirm(t("removeJobConfirm"))) {
+          return;
+        }
+        if (!canPostToDashboardApi()) {
+          const saved = sessionStorage.getItem(API_ORIGIN_STORAGE_KEY);
+          const apiHint = saved
+            ? t("savedApiOrigin", { origin: saved })
+            : t("openViaDashboard");
+          alert(
+            [
+              t("removeUnavailableDetail"),
+              "",
+              t("option1Title"),
+              t("option1Steps"),
+              "",
+              t("option2Title"),
+              t("option2Steps"),
+              "",
+              apiHint,
+            ].join("\n"),
+          );
+          return;
+        }
+        btn.disabled = true;
+        try {
+          const r = await fetch(removeJobFetchUrl(), {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              job_key: jobKey,
+              link: currentJob.link || "",
+              title: currentJob.title || "",
+              company: currentJob.company || "",
+            }),
+          });
+          let payload = {};
+          try {
+            payload = await r.json();
+          } catch {
+            payload = {};
+          }
+          if (!r.ok) {
+            if (
+              r.status === 404 &&
+              payload.error !== "job_not_found" &&
+              !payload.error
+            ) {
+              throw new Error("__NO_REMOVE_ROUTE");
+            }
+            throw new Error(
+              payload.error === "job_not_found"
+                ? t("jobNotFound")
+                : payload.error || t("serverError", { status: r.status }),
+            );
+          }
+          lastData.jobs = (lastData.jobs || []).filter((j) => clientJobKey(j) !== jobKey);
+          lastData.jobs_count = lastData.jobs.length;
+          lastJobsTotal = lastData.jobs_count;
+          buildToolbar(lastData);
+          applyView();
+        } catch (e) {
+          const msg = String(e?.message || e);
+          if (msg === "__NO_REMOVE_ROUTE") {
+            alert(
+              [
+                t("remove404Title"),
+                "",
+                t("remove404Cause"),
+                "",
+                t("remove404FixTitle"),
+                t("remove404Fix1"),
+                t("remove404Fix2"),
+                t("remove404Fix3"),
+                "",
+                t("remove404Tried", { url: removeJobFetchUrl() }),
+              ].join("\n"),
+            );
+          } else if (msg.includes("Failed to fetch") || msg.includes("NetworkError")) {
+            alert(t("apiUnreachableWithHint"));
+          } else {
+            alert(msg);
+          }
+          btn.disabled = false;
+        }
+      });
+
+      (async () => {
+        setupLangPicker();
+        await ensureDashboardApiBase();
+        await initLauncher();
+        loadMandatoryTagsFromLocalStorage();
+        setupTagFiltersDialog();
+        await loadDashboardSettings();
+        updateCustomSearchPreview();
+        await loadData();
+      })();
+    </script>
+  </body>
+</html>
