@@ -1,5 +1,6 @@
 # LinkedIn Job Agent
 https://www.youtube.com/watch?v=H3KLzcKWj_A
+
 Read-only local Playwright tool for LinkedIn job searches, reports, and a web dashboard.
 
 Works on **Windows, macOS, and Linux**.
