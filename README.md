@@ -11,6 +11,7 @@ Works on **Windows, macOS, and Linux**.
 - Playwright Chromium (`npx playwright install chromium`)
 - **Google Chrome** recommended for LinkedIn login (Playwright uses the installed Chrome channel by default)
 - **[Ollama](https://ollama.com)** for AI summaries when using **Run**, **Run all**, or **Refresh list** (`ollama pull llama3.2:3b`)
+- We use llama3.2:3b — you need to download it like this( ollama pull llama3.2:3b) or in Ollama window
 
 ## Quick start
 
