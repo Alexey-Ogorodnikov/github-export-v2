@@ -1,5 +1,5 @@
 # LinkedIn Job Agent
-https://www.youtube.com/watch?v=H3KLzcKWj_A
+https://www.youtube.com/watch?v=PFEWtG8lYBk
 
 Read-only local Playwright tool for LinkedIn job searches, reports, and a web dashboard.
 
