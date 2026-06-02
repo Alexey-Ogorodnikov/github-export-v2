@@ -598,6 +598,12 @@
         color: #555;
         line-height: 1.45;
       }
+      .scenario-stats {
+        margin: 6px 0 0;
+        font-size: 12px;
+        color: #666;
+        line-height: 1.4;
+      }
       .scenario-actions {
         display: flex;
         flex-wrap: wrap;
@@ -1135,6 +1141,11 @@
             "LinkedIn: {keywords}, {location}, {workType}. Jobs from {period}. Full scrape → Ollama → list update.",
           customSearchFromUrl:
             "LinkedIn: {keywords}, {location}, {workType}. Jobs from {period}. Filters from your link. Full scrape → Ollama → list update.",
+          scenarioStatsLine:
+            "Last run: {found} found · {added} added · {skipped} skipped · {total} total",
+          scenarioStatsLineNoTotal:
+            "Last run: {found} found · {added} added · {skipped} skipped",
+          scenarioStatsNone: "Last run: not yet executed",
           periodLast24h: "the last 24 hours",
           periodLast2d: "the last 2 days",
           periodLast7d: "the last 7 days",
@@ -1357,6 +1368,11 @@
             "LinkedIn: {keywords}, {location}, {workType}. Вакансии за {period}. Полный сбор → Ollama → обновление списка.",
           customSearchFromUrl:
             "LinkedIn: {keywords}, {location}, {workType}. Вакансии за {period}. Фильтры из вашей ссылки. Полный сбор → Ollama → обновление списка.",
+          scenarioStatsLine:
+            "Последний раз: найдено {found} · добавлено {added} · пропущено {skipped} · всего {total}",
+          scenarioStatsLineNoTotal:
+            "Последний раз: найдено {found} · добавлено {added} · пропущено {skipped}",
+          scenarioStatsNone: "Последний запуск: ещё не выполнялся",
           periodLast24h: "последние 24 часа",
           periodLast2d: "последние 2 дня",
           periodLast7d: "последние 7 дней",
@@ -1869,10 +1885,40 @@
         document.getElementById("refreshJobsBtn")?.toggleAttribute("disabled", disabled);
       }
 
+      const AUTO_SCENARIO_DAYS_SUFFIX =
+        /(\d+ дн\.?|\d+ дня|1 день|2 дня|7 дней|\d+ days?)$/;
+
+      function localizeScenarioTitleDays(title) {
+        const stored = String(title || "").trim();
+        const m = stored.match(AUTO_SCENARIO_DAYS_SUFFIX);
+        if (!m) return stored;
+        const suffix = m[1];
+        const daysMap = {
+          "1 день": 1,
+          "2 дня": 2,
+          "7 дней": 7,
+          "1 day": 1,
+          "2 days": 2,
+          "7 days": 7,
+        };
+        let days = daysMap[suffix];
+        if (days === undefined) {
+          const numMatch = suffix.match(/^(\d+)/);
+          days = numMatch ? Number.parseInt(numMatch[1], 10) : null;
+        }
+        if (!days) return stored;
+        const dayLabels = getCustomDayLabels();
+        const localized = dayLabels[days] || t("dayN", { n: days });
+        if (suffix === localized) return stored;
+        return stored.slice(0, -suffix.length) + localized;
+      }
+
       function scenarioDisplayTitle(scenario) {
         if (!scenario) return "";
         const stored = String(scenario.title || "").trim();
-        if (stored) return stored;
+        if (stored) {
+          return scenario.keywords ? localizeScenarioTitleDays(stored) : stored;
+        }
         if (scenario.keywords) {
           return customSearchLabel({
             keywords: scenario.keywords,
@@ -1899,6 +1945,46 @@
           });
         }
         return scenario.description || "";
+      }
+
+      function scenarioRunStats(scenario) {
+        const stats = scenario?.lastRunStats;
+        if (!stats || typeof stats !== "object") {
+          return null;
+        }
+        const found = Number.isFinite(Number(stats.found)) ? Number(stats.found) : 0;
+        const added = Number.isFinite(Number(stats.added)) ? Number(stats.added) : 0;
+        const skippedRaw = Number(stats.skipped);
+        const skipped = Number.isFinite(skippedRaw) && skippedRaw >= 0
+          ? Math.round(skippedRaw)
+          : Math.max(0, found - added);
+        const totalRaw = stats.totalSeen ?? stats.total ?? stats.linkedinTotal;
+        const totalNum = Number(totalRaw);
+        const total = Number.isFinite(totalNum) && totalNum >= 0 ? Math.round(totalNum) : null;
+        if (!Number.isFinite(found) && !Number.isFinite(added) && total === null) {
+          return null;
+        }
+        return { found, added, skipped, total };
+      }
+
+      function scenarioDisplayStats(scenario) {
+        const run = scenarioRunStats(scenario);
+        if (!run) {
+          return t("scenarioStatsNone");
+        }
+        if (run.total !== null) {
+          return t("scenarioStatsLine", {
+            found: run.found,
+            added: run.added,
+            skipped: run.skipped,
+            total: run.total,
+          });
+        }
+        return t("scenarioStatsLineNoTotal", {
+          found: run.found,
+          added: run.added,
+          skipped: run.skipped,
+        });
       }
 
       function formatRunLabel(run) {
@@ -2153,6 +2239,7 @@
         }
         if (run.status === "done" || run.status === "error") {
           await loadData();
+          await reloadLauncherScenarios();
         }
         if (consoleLogDialogOpen) {
           await refreshConsoleLogDialog(true);
@@ -3055,8 +3142,12 @@
           const desc = document.createElement("p");
           desc.className = "scenario-desc";
           desc.textContent = scenarioDisplayDescription(s);
+          const stats = document.createElement("p");
+          stats.className = "scenario-stats";
+          stats.textContent = scenarioDisplayStats(s);
           text.appendChild(title);
           text.appendChild(desc);
+          text.appendChild(stats);
 
           const actions = document.createElement("div");
           actions.className = "scenario-actions";

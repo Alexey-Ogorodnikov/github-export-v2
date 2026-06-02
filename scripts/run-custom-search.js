@@ -1,10 +1,16 @@
 import {
+  getProjectRoot,
   initCli,
   loadCustomSearch,
   parseCliFlags,
   runNodeScript,
   sessionStartMs,
 } from "./run-cli.js";
+import {
+  commitScrapeStats,
+  persistScenarioRunStats,
+  resolveScenarioIdFromEnv,
+} from "./scenario-run-stats.js";
 
 initCli();
 
@@ -29,12 +35,18 @@ console.log(`Custom search: ${name}`);
 console.log(`URL: ${url}`);
 console.log("");
 
+const scenarioId = opts.searchId || resolveScenarioIdFromEnv();
+
 const env = {
   ...process.env,
   LINKEDIN_SEARCH_URL_EXACT: "1",
   JOB_URL: url,
 };
 delete env.LINKEDIN_JOB_POSTED_DAYS;
+
+if (scenarioId && !scenarioId.startsWith("custom-")) {
+  env.DASHBOARD_SCENARIO_ID = scenarioId;
+}
 
 if (opts.live) {
   env.PREPROCESS_SESSION_START_MS = sessionStartMs();
@@ -45,6 +57,10 @@ let code = runNodeScript("scripts/read-jobs.js", env);
 if (code !== 0) {
   console.error(`LinkedIn scrape failed (exit ${code}). See reports/run.log`);
   process.exit(code);
+}
+
+if (scenarioId) {
+  commitScrapeStats(getProjectRoot(), scenarioId);
 }
 
 if (!opts.live) {
@@ -59,4 +75,8 @@ if (opts.preprocessOnly) {
 
 console.log("");
 console.log("live: Ollama preprocess + dashboard...");
-process.exit(runNodeScript("scripts/live-dashboard.js", env));
+const liveCode = runNodeScript("scripts/live-dashboard.js", env);
+if (liveCode === 0 && scenarioId) {
+  persistScenarioRunStats(getProjectRoot(), scenarioId);
+}
+process.exit(liveCode);

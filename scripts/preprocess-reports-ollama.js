@@ -1,6 +1,12 @@
 import { readdir, readFile, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { writeDashboardSnapshot } from "./dashboard-db.js";
+import {
+  listSessionRawReportNames,
+  persistBatchScenarioRunStats,
+  recordPreprocessAddedCount,
+  resolveScenarioIdFromEnv,
+} from "./scenario-run-stats.js";
 import { ensureWinConsoleUtf8 } from "./win-console-utf8.js";
 
 ensureWinConsoleUtf8();
@@ -377,6 +383,24 @@ if (canResume && rawFilesToProcess.length === 0) {
     );
     console.log(`Full rebuild of all *-raw.md via Ollama: npm run preprocess:rebuild`);
   }
+  recordPreprocessAddedCount(projectRoot, 0);
+  if (sessionStartMs > 0 && !resolveScenarioIdFromEnv()) {
+    const existingKeysEarly = new Set();
+    for (const job of previous.jobs) {
+      const k = jobKey(job);
+      if (k) {
+        existingKeysEarly.add(k);
+      }
+    }
+    const sessionRaw = listSessionRawReportNames(reportsDir, sessionStartMs);
+    persistBatchScenarioRunStats(
+      projectRoot,
+      reportsDir,
+      sessionStartMs,
+      existingKeysEarly,
+      sessionRaw,
+    );
+  }
   console.log(`Output: ${path.relative(projectRoot, outputPath)}`);
   process.exit(0);
 }
@@ -413,6 +437,7 @@ const uniqueFromBatch = dedupeJobsByLink(allJobs);
 preprocessLog(`Extracted ${uniqueFromBatch.length} jobs from this batch (before merging with dashboard).`);
 
 let uniqueJobs;
+let addedThisRun = 0;
 const recentTotalsIncremental = [];
 if (canResume) {
   const appended = [];
@@ -456,9 +481,11 @@ if (canResume) {
       tag,
     );
   }
+  addedThisRun = appended.length;
   uniqueJobs = [...existingJobs, ...appended];
 } else {
   uniqueJobs = uniqueFromBatch;
+  addedThisRun = uniqueFromBatch.length;
   preprocessLog(`Ollama for all ${uniqueJobs.length} jobs in first snapshot (2 requests each)…`);
   for (let i = 0; i < uniqueJobs.length; i += 1) {
     await preprocessOllamaForOneJob(
@@ -498,6 +525,18 @@ console.log(`Total raw files: ${rawFiles.length}`);
 console.log(`Processed this run: ${filesToScan.length}`);
 console.log(`Unique jobs: ${uniqueJobs.length}`);
 console.log(`Output: ${path.relative(projectRoot, outputPath)}`);
+if (resolveScenarioIdFromEnv()) {
+  recordPreprocessAddedCount(projectRoot, addedThisRun);
+} else if (sessionStartMs > 0) {
+  const existingKeysBeforeBatch = new Set(existingByKey.keys());
+  persistBatchScenarioRunStats(
+    projectRoot,
+    reportsDir,
+    sessionStartMs,
+    existingKeysBeforeBatch,
+    filesToScan,
+  );
+}
 preprocessLog(`Done in ${preprocessElapsedSec()}s wall time.`);
 
 async function buildPostedByJobKeyFromRawFiles(rawFileNames, dir) {

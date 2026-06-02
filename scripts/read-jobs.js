@@ -2,8 +2,10 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { launchLinkedInContext } from "./browser-launch.js";
+import { loadExistingJobKeySet } from "./dashboard-db.js";
 import { applyLinkedInPostedDaysFromEnv } from "./linkedin-search-url.js";
 import { getMaxJobsPerSearch } from "./dashboard-settings.js";
+import { recordScrapeFoundCount } from "./scenario-run-stats.js";
 
 const defaultMinLinkedInJobDelayMs = 1000;
 const defaultMaxLinkedInJobDelayMs = 20000;
@@ -114,9 +116,19 @@ export async function scanUrlToReports(
 
   const source = currentUrl.includes("indeed.") ? "indeed" : "linkedin";
 
-  const jobs = source === "indeed"
-    ? await readIndeed(targetPage)
-    : await readLinkedIn(targetPage);
+  let jobs;
+  let totalSeen = null;
+  let skippedExisting = 0;
+  if (source === "indeed") {
+    const indeedResult = await readIndeed(targetPage);
+    jobs = indeedResult.jobs;
+    skippedExisting = indeedResult.skippedExisting;
+  } else {
+    const linkedInResult = await readLinkedIn(targetPage);
+    jobs = linkedInResult.jobs;
+    totalSeen = linkedInResult.totalSeen;
+    skippedExisting = linkedInResult.skippedExisting;
+  }
 
   if (isPreview) {
     console.log(`Preview: opened ${jobs.length} job(s) on ${source}. No reports written.`);
@@ -124,7 +136,15 @@ export async function scanUrlToReports(
   }
 
   const runId = makeRunId();
-  const rawReport = buildRawReport({ title, currentUrl: reportUrl, source, jobs, emailContext });
+  const rawReport = buildRawReport({
+    title,
+    currentUrl: reportUrl,
+    source,
+    jobs,
+    emailContext,
+    totalSeen,
+    skippedExisting,
+  });
   const fileName = `reports/${runId}-raw.md`;
   const linksFileName = `reports/${runId}-links.md`;
   await writeFile(fileName, rawReport, "utf8");
@@ -133,6 +153,8 @@ export async function scanUrlToReports(
   console.log(`Read ${jobs.length} jobs from ${source}.`);
   console.log(`Raw: ${fileName}`);
   console.log(`Links: ${linksFileName}`);
+
+  recordScrapeFoundCount(process.cwd(), jobs.length, totalSeen, skippedExisting);
 
   return { exitCode: 0, reportPaths: [fileName, linksFileName], page: targetPage };
 }
@@ -183,16 +205,41 @@ function resolveLinkedInJobDelays() {
   return { min: defaultMinLinkedInJobDelayMs, max: defaultMaxLinkedInJobDelayMs };
 }
 
+function shouldSkipExistingJobs() {
+  const raw = (process.env.LINKEDIN_SKIP_EXISTING ?? process.env.SKIP_EXISTING_JOBS ?? "").trim();
+  if (raw === "0" || /^false$/i.test(raw) || /^no$/i.test(raw)) {
+    return false;
+  }
+  return true;
+}
+
+function resolveExistingJobKeys() {
+  if (!shouldSkipExistingJobs()) {
+    return new Set();
+  }
+  return loadExistingJobKeySet(process.cwd());
+}
+
 async function readLinkedIn(page) {
   const maxJobsPerSearch = resolveMaxJobsPerSearch();
+  const existingJobKeys = resolveExistingJobKeys();
+  if (existingJobKeys.size > 0) {
+    console.log(`LinkedIn: ${existingJobKeys.size} job(s) already in dashboard, will skip on scan.`);
+  }
   const cards = linkedInJobCardsLocator(page);
   const jobs = [];
   const seenJobKeys = new Set();
+  let skippedExisting = 0;
+  let skippedDuplicate = 0;
+  let totalSeen = 0;
   let pageNum = 1;
   const maxPages = Math.ceil(maxJobsPerSearch / 25) + 2;
   const delays = resolveLinkedInJobDelays();
 
-  while (jobs.length < maxJobsPerSearch && pageNum <= maxPages) {
+  await page.waitForLoadState("domcontentloaded");
+  await waitForLinkedInJobCards(page, cards, 60000);
+
+  while (pageNum <= maxPages) {
     await page.waitForLoadState("domcontentloaded");
     await page.bringToFront().catch(() => {});
     await waitForLinkedInJobCards(page, cards, 60000);
@@ -203,24 +250,39 @@ async function readLinkedIn(page) {
       break;
     }
 
-    const remaining = maxJobsPerSearch - jobs.length;
+    const remaining = Math.max(0, maxJobsPerSearch - jobs.length);
     console.log(
       `LinkedIn: page ${pageNum}, ${totalCards} card(s) on page, `
-      + `${jobs.length}/${maxJobsPerSearch} read so far, up to ${remaining} more on this page.`,
+      + `${jobs.length}/${maxJobsPerSearch} read so far, up to ${remaining} more to read on this page.`,
     );
 
-    for (let i = 0; i < totalCards && jobs.length < maxJobsPerSearch; i += 1) {
+    for (let i = 0; i < totalCards; i += 1) {
       const card = cards.nth(i);
       await card.scrollIntoViewIfNeeded().catch(() => {});
       const summary = sourceText(await card.innerText({ timeout: 5000 }).catch(() => ""));
       if (!summary) continue;
+
+      totalSeen += 1;
 
       const link = await card.locator("a[href*='/jobs/view/']").first().getAttribute("href", { timeout: 2000 }).catch(() => "");
       const jobKey = normalizeJobLink(link);
       const title = firstLine(summary);
 
       if (jobKey && seenJobKeys.has(jobKey)) {
+        skippedDuplicate += 1;
         console.log(`LinkedIn: skip duplicate on page ${pageNum}: ${title}`);
+        continue;
+      }
+
+      if (jobKey && existingJobKeys.has(jobKey)) {
+        console.log(`LinkedIn: skip already in list: ${title}`);
+        seenJobKeys.add(jobKey);
+        skippedExisting += 1;
+        continue;
+      }
+
+      if (jobs.length >= maxJobsPerSearch) {
+        if (jobKey) seenJobKeys.add(jobKey);
         continue;
       }
 
@@ -239,11 +301,9 @@ async function readLinkedIn(page) {
       jobs.push(parseJob(summary, detail, absoluteUrl(link)));
     }
 
-    if (jobs.length >= maxJobsPerSearch) break;
-
     const moved = await goToNextLinkedInSearchPage(page, cards, seenJobKeys);
     if (!moved) {
-      console.log(`LinkedIn: no more pages (${jobs.length} job(s) total).`);
+      console.log(`LinkedIn: no more pages (${jobs.length} job(s) read, ${totalSeen} card(s) seen).`);
       break;
     }
 
@@ -251,7 +311,20 @@ async function readLinkedIn(page) {
     await page.waitForTimeout(randomInt(1500, 3500));
   }
 
-  return jobs;
+  if (skippedExisting > 0) {
+    console.log(`LinkedIn: skipped ${skippedExisting} job(s) already in dashboard.`);
+  }
+  if (skippedDuplicate > 0) {
+    console.log(`LinkedIn: skipped ${skippedDuplicate} duplicate card(s) on search pages.`);
+  }
+  if (totalSeen > 0) {
+    console.log(
+      `LinkedIn: ${totalSeen} vacancy card(s) seen on search `
+      + `(${jobs.length} read, ${skippedExisting} already in list, ${skippedDuplicate} duplicate).`,
+    );
+  }
+
+  return { jobs, totalSeen, skippedExisting };
 }
 
 function linkedInJobCardsLocator(page) {
@@ -264,13 +337,20 @@ function linkedInJobCardsLocator(page) {
 }
 
 function normalizeJobLink(link) {
+  return jobKeyFromHref(link);
+}
+
+function jobKeyFromHref(link, defaultOrigin = "https://www.linkedin.com") {
   if (!link) return "";
   try {
-    const u = new URL(link, "https://www.linkedin.com");
-    const match = u.pathname.match(/\/jobs\/view\/(\d+)/);
-    return match ? match[1] : u.pathname;
+    const u = new URL(link, defaultOrigin);
+    const match = u.pathname.match(/\/jobs\/view\/(\d+)/i);
+    if (match) return match[1];
+    const jk = u.searchParams.get("jk");
+    if (jk) return jk;
+    return u.toString().trim();
   } catch {
-    return link;
+    return String(link).trim();
   }
 }
 
@@ -334,29 +414,53 @@ async function waitForLinkedInJobCards(page, cards, timeoutMs = 60000) {
 
 async function readIndeed(page) {
   const maxJobsPerSearch = resolveMaxJobsPerSearch();
+  const existingJobKeys = resolveExistingJobKeys();
+  if (existingJobKeys.size > 0) {
+    console.log(`Indeed: ${existingJobKeys.size} job(s) already in dashboard, will skip on scan.`);
+  }
   await page.waitForLoadState("domcontentloaded");
   const cards = page.locator("[data-testid='slider_item'], .job_seen_beacon");
   const totalCards = await cards.count();
-  const count = Math.min(totalCards, maxJobsPerSearch);
-  console.log(`Indeed: found ${totalCards} job card(s), will read ${count}.`);
+  console.log(`Indeed: found ${totalCards} job card(s), up to ${maxJobsPerSearch} new to read.`);
   const jobs = [];
+  const seenJobKeys = new Set();
+  let skippedExisting = 0;
 
-  for (let i = 0; i < count; i += 1) {
+  for (let i = 0; i < totalCards && jobs.length < maxJobsPerSearch; i += 1) {
     const card = cards.nth(i);
     const summary = sourceText(await card.innerText({ timeout: 5000 }).catch(() => ""));
     if (!summary) continue;
 
-    console.log(`Indeed: job ${i + 1}/${count}: ${firstLine(summary)}`);
+    const link = await card.locator("a[href]").first().getAttribute("href", { timeout: 2000 }).catch(() => "");
+    const jobKey = jobKeyFromHref(link, "https://www.indeed.com");
+    const title = firstLine(summary);
+
+    if (jobKey && seenJobKeys.has(jobKey)) {
+      continue;
+    }
+
+    if (jobKey && existingJobKeys.has(jobKey)) {
+      console.log(`Indeed: skip already in list: ${title}`);
+      seenJobKeys.add(jobKey);
+      skippedExisting += 1;
+      continue;
+    }
+
+    console.log(`Indeed: job ${jobs.length + 1}/${maxJobsPerSearch}: ${title}`);
 
     await card.click({ timeout: 5000 }).catch(() => {});
     await page.waitForTimeout(1200);
 
     const detail = await readIndeedDetail(page);
-    const link = await card.locator("a[href]").first().getAttribute("href", { timeout: 2000 }).catch(() => "");
-    jobs.push(parseJob(summary, detail, absoluteUrl(link)));
+    if (jobKey) seenJobKeys.add(jobKey);
+    jobs.push(parseJob(summary, detail, absoluteUrl(link, "https://www.indeed.com")));
   }
 
-  return jobs;
+  if (skippedExisting > 0) {
+    console.log(`Indeed: skipped ${skippedExisting} job(s) already in dashboard.`);
+  }
+
+  return { jobs, skippedExisting };
 }
 
 async function readLinkedInDetail(page) {
@@ -414,18 +518,24 @@ function parseJob(summary, detail, link = "") {
   };
 }
 
-function buildRawReport({ title, currentUrl, source, jobs, emailContext }) {
-  return [
+function buildRawReport({ title, currentUrl, source, jobs, emailContext, totalSeen, skippedExisting }) {
+  const lines = [
     "# Raw Job Report",
     "",
     `Source: ${source}`,
     ...emailMetadataLines(emailContext),
     `Page: ${title}`,
     `Search URL: ${currentUrl}`,
-    "",
-    rawJobsSection(jobs),
-    "",
-  ].join("\n");
+  ];
+  if (Number.isFinite(totalSeen) && totalSeen >= 0) {
+    lines.push(`Total seen on search: ${Math.round(totalSeen)}`);
+  }
+  const skipped = Number(skippedExisting);
+  if (Number.isFinite(skipped) && skipped > 0) {
+    lines.push(`Skipped existing: ${Math.round(skipped)}`);
+  }
+  lines.push("", rawJobsSection(jobs), "");
+  return lines.join("\n");
 }
 
 function rawJobsSection(jobs) {
@@ -479,10 +589,10 @@ function makeRunId() {
   return `${stamp}_${suffix}`;
 }
 
-function absoluteUrl(value) {
+function absoluteUrl(value, defaultOrigin = "https://www.linkedin.com") {
   if (!value) return "";
   try {
-    return new URL(value, "https://www.linkedin.com").toString();
+    return new URL(value, defaultOrigin).toString();
   } catch {
     return value;
   }

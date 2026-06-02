@@ -2,13 +2,25 @@ node_modules/
 browser-profile/
 browser-profile-preview/
 reports/
-data/dashboard.db
-data/dashboard-settings.json
-data/applied-jobs.json
-data/not-interested-jobs.json
+
+# Local runtime data (keep folder via .gitkeep)
+data/*
+!data/.gitkeep
+
+# Personal LinkedIn search configs (example stays in repo)
+custom-searches/*
+!custom-searches/example-software-engineer-remote-7d.json
+
 .env
 credentials.json
 token.json
+
 __pycache__/
 *.pyc
+
 .DS_Store
+Thumbs.db
+Desktop.ini
+
+test-results/
+playwright-report/
