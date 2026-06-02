@@ -8,7 +8,7 @@ import {
   parseLinkedInSearchUrl,
 } from "./linkedin-search-url.js";
 
-/** @typedef {{ id: string, title: string, description: string, url: string, keywords?: string, days?: number, workType?: string, country?: string, city?: string, region?: string }} Scenario */
+/** @typedef {{ id: string, title: string, description: string, url: string, keywords?: string, days?: number, workType?: string, country?: string, city?: string, region?: string, lastRunStats?: { found: number, added: number, skipped?: number, totalSeen?: number, at: string } }} Scenario */
 
 const WORK_TYPE_DESC = {
   any: "любой формат работы",
@@ -178,6 +178,35 @@ function makeScenarioId(params, projectRoot) {
   return id;
 }
 
+function parseLastRunStats(raw) {
+  const stats = raw?.lastRunStats;
+  if (!stats || typeof stats !== "object") {
+    return undefined;
+  }
+  const found = Number(stats.found);
+  const added = Number(stats.added);
+  const skipped = Number(stats.skipped);
+  const totalSeen = Number(stats.totalSeen ?? stats.linkedinTotal);
+  const at = String(stats.at || "").trim();
+  if (!Number.isFinite(found) && !Number.isFinite(added) && !Number.isFinite(totalSeen)) {
+    return undefined;
+  }
+  const result = {
+    found: Number.isFinite(found) && found >= 0 ? Math.round(found) : 0,
+    added: Number.isFinite(added) && added >= 0 ? Math.round(added) : 0,
+    at: at || undefined,
+  };
+  if (Number.isFinite(skipped) && skipped >= 0) {
+    result.skipped = Math.round(skipped);
+  } else if (result.found >= result.added) {
+    result.skipped = result.found - result.added;
+  }
+  if (Number.isFinite(totalSeen) && totalSeen >= 0) {
+    result.totalSeen = Math.round(totalSeen);
+  }
+  return result;
+}
+
 function parseScenarioFile(raw, fileStem) {
   if (!raw || typeof raw !== "object") {
     return null;
@@ -199,6 +228,7 @@ function parseScenarioFile(raw, fileStem) {
       workType: params.workType,
       country: params.country,
       city: params.city,
+      lastRunStats: parseLastRunStats(raw),
     };
   }
 
@@ -230,6 +260,7 @@ function parseScenarioFile(raw, fileStem) {
     workType: params.workType,
     country: params.country,
     city: params.city,
+    lastRunStats: parseLastRunStats(raw),
   };
 }
 
@@ -286,6 +317,7 @@ export function listScenariosForApi() {
     country: s.country,
     city: s.city,
     url: s.url,
+    lastRunStats: s.lastRunStats,
   }));
 }
 

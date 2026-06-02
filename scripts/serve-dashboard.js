@@ -76,6 +76,7 @@ const server = createServer(async (req, res) => {
       return;
     }
     if (requestPath === "/api/pipelines" || requestPath === "/api/scenarios") {
+      reloadCustomScenarios(projectRoot);
       corsHeaders(res);
       res.setHeader("Content-Type", "application/json; charset=utf-8");
       res.writeHead(200).end(
@@ -516,6 +517,9 @@ const server = createServer(async (req, res) => {
 
     const content = await readFile(filePath);
     res.setHeader("Content-Type", getContentType(filePath));
+    if (/\.html?$/i.test(filePath)) {
+      res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+    }
     res.writeHead(200).end(content);
   } catch {
     res.writeHead(404).end("Not Found");

@@ -1,4 +1,4 @@
-import { mkdirSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import Database from "better-sqlite3";
 
@@ -102,4 +102,43 @@ export function extractJobKey(job) {
   const m = link.match(/\/jobs\/view\/(\d+)/i);
   if (m) return m[1];
   return link.trim();
+}
+
+/** LinkedIn numeric IDs (or URL fallback) already in dashboard-jobs.json / dashboard.db. */
+export function loadExistingJobKeySet(projectRoot = process.cwd()) {
+  const keys = new Set();
+  const dbPath = getDashboardDbPath(projectRoot);
+
+  if (existsSync(dbPath)) {
+    try {
+      const db = new Database(dbPath, { readonly: true });
+      try {
+        initSchema(db);
+        for (const row of db.prepare("SELECT job_key FROM jobs").all()) {
+          const key = String(row?.job_key || "").trim();
+          if (key) keys.add(key);
+        }
+      } finally {
+        db.close();
+      }
+      return keys;
+    } catch {
+      // fall through to JSON
+    }
+  }
+
+  const jsonPath = path.join(projectRoot, "reports", "dashboard-jobs.json");
+  if (existsSync(jsonPath)) {
+    try {
+      const snapshot = JSON.parse(readFileSync(jsonPath, "utf8"));
+      for (const job of snapshot?.jobs || []) {
+        const key = extractJobKey(job);
+        if (key) keys.add(key);
+      }
+    } catch {
+      // empty set
+    }
+  }
+
+  return keys;
 }

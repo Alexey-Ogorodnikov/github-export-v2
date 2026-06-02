@@ -40,6 +40,10 @@ export function buildExecuteSpawn(projectRoot, pipeline) {
     LINKEDIN_MAX_JOBS: String(getMaxJobsPerSearch(projectRoot)),
     ...pipeline.env,
   };
+  const pipelineId = String(pipeline.id || "").trim();
+  if (pipelineId && !pipelineId.startsWith("custom-")) {
+    env.DASHBOARD_SCENARIO_ID = pipelineId;
+  }
   return {
     command: process.execPath,
     args,
