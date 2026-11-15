@@ -18,7 +18,7 @@ function buildLaunchOptions({ forInstalledBrowser }) {
   // Real Chrome/Edge warn about this flag; use only for bundled Chromium fallback.
   const stealth =
     !forInstalledBrowser || process.env.LINKEDIN_STEALTH_ARGS === "1";
-  if (stealth && !forInstalledBrowser) {
+  if (stealth) {
     args.push("--disable-blink-features=AutomationControlled");
   }
 

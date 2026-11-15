@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { canonicalizeLinkedInJobsSearchUrl } from "./linkedin-search-url.js";
+import { canonicalizeIndeedJobsSearchUrl } from "./indeed-search-url.js";
 
 const PENDING_FILE = ".scenario-run-pending.json";
 
@@ -72,6 +73,7 @@ function normalizeTotalSeen(value) {
 
 function parseRawFileJobStats(content, existingKeys) {
   const searchUrl = content.match(/^Search URL:\s*(.+)$/m)?.[1]?.trim() ?? "";
+  const scenarioId = content.match(/^Scenario ID:\s*(.+)$/m)?.[1]?.trim() ?? "";
   const totalSeenRaw =
     content.match(/^Total seen on search:\s*(\d+)/m)?.[1]
     ?? content.match(/^LinkedIn total on site:\s*(\d+)/m)?.[1]
@@ -89,7 +91,7 @@ function parseRawFileJobStats(content, existingKeys) {
   }
   const skippedFromAdded = Math.max(0, found - added);
   const skipped = skippedFromFile !== null ? skippedFromFile : skippedFromAdded;
-  return { searchUrl, found, added, totalSeen, skipped };
+  return { searchUrl, scenarioId, found, added, totalSeen, skipped };
 }
 
 function loadScenarioUrlToId(projectRoot) {
@@ -117,11 +119,15 @@ function loadScenarioUrlToId(projectRoot) {
 }
 
 function resolveScenarioIdForSearchUrl(urlToId, searchUrl) {
-  const canonical = canonicalizeLinkedInJobsSearchUrl(searchUrl);
-  if (!canonical) {
-    return "";
+  const linkedIn = canonicalizeLinkedInJobsSearchUrl(searchUrl);
+  if (linkedIn && urlToId.get(linkedIn)) {
+    return urlToId.get(linkedIn);
   }
-  return urlToId.get(canonical) || "";
+  const indeed = canonicalizeIndeedJobsSearchUrl(searchUrl);
+  if (indeed && urlToId.get(indeed)) {
+    return urlToId.get(indeed);
+  }
+  return "";
 }
 
 export function listSessionRawReportNames(reportsDir, sessionStartMs) {
@@ -152,14 +158,24 @@ export function recordScrapeFoundCount(projectRoot, found, totalSeen = null, ski
   }
   const count = Number.isFinite(found) && found >= 0 ? Math.round(found) : 0;
   const pending = readPending(projectRoot);
-  const total = normalizeTotalSeen(totalSeen);
-  const skippedCount = normalizeTotalSeen(skipped);
+  const same = pending?.scenarioId === scenarioId;
+  const prevFound = same && Number.isFinite(pending.found) ? Math.round(pending.found) : 0;
+  const prevTotal = same ? normalizeTotalSeen(pending.totalSeen) : null;
+  const prevSkipped = same ? normalizeTotalSeen(pending.skipped) : null;
+  const nextTotal = normalizeTotalSeen(totalSeen);
+  const nextSkipped = normalizeTotalSeen(skipped);
   writePending(projectRoot, {
     scenarioId,
-    found: count,
-    totalSeen: total ?? (pending?.scenarioId === scenarioId ? pending.totalSeen : undefined),
-    skipped: skippedCount ?? (pending?.scenarioId === scenarioId ? pending.skipped : undefined),
-    added: pending?.scenarioId === scenarioId ? pending.added : undefined,
+    found: prevFound + count,
+    totalSeen:
+      prevTotal !== null || nextTotal !== null
+        ? (prevTotal ?? 0) + (nextTotal ?? 0)
+        : undefined,
+    skipped:
+      prevSkipped !== null || nextSkipped !== null
+        ? (prevSkipped ?? 0) + (nextSkipped ?? 0)
+        : undefined,
+    added: same ? pending.added : undefined,
     updatedAt: new Date().toISOString(),
   });
 }
@@ -282,6 +298,25 @@ export function commitScrapeStats(projectRoot, scenarioId) {
   return true;
 }
 
+function resolveRawScenarioId(parsed, urlToId) {
+  const fromHeader = String(parsed.scenarioId || "").trim();
+  if (fromHeader && !fromHeader.startsWith("custom-")) {
+    return fromHeader;
+  }
+  return resolveScenarioIdForSearchUrl(urlToId, parsed.searchUrl);
+}
+
+function mergeRunStats(prev, next) {
+  const found = (Number(prev?.found) || 0) + (Number(next?.found) || 0);
+  const added = (Number(prev?.added) || 0) + (Number(next?.added) || 0);
+  const skipped = (Number(prev?.skipped) || 0) + (Number(next?.skipped) || 0);
+  const prevTotal = normalizeTotalSeen(prev?.totalSeen);
+  const nextTotal = normalizeTotalSeen(next?.totalSeen);
+  const totalSeen =
+    prevTotal === null && nextTotal === null ? null : (prevTotal ?? 0) + (nextTotal ?? 0);
+  return { found, added, skipped, totalSeen };
+}
+
 /**
  * After Run all preprocess: attribute found/added per search from session raw reports.
  * @param {string} projectRoot
@@ -309,7 +344,7 @@ export function persistBatchScenarioRunStats(
   }
 
   const urlToId = loadScenarioUrlToId(projectRoot);
-  let updated = 0;
+  const byScenario = new Map();
 
   for (const fileName of files) {
     const filePath = path.join(reportsDir, fileName);
@@ -320,25 +355,31 @@ export function persistBatchScenarioRunStats(
       continue;
     }
 
-    const { searchUrl, found, added, totalSeen, skipped } = parseRawFileJobStats(content, existingKeys);
-    const scenarioId = resolveScenarioIdForSearchUrl(urlToId, searchUrl);
+    const parsed = parseRawFileJobStats(content, existingKeys);
+    const scenarioId = resolveRawScenarioId(parsed, urlToId);
     if (!scenarioId) {
       continue;
     }
 
+    const prev = byScenario.get(scenarioId) || { found: 0, added: 0, skipped: 0, totalSeen: null };
+    byScenario.set(scenarioId, mergeRunStats(prev, parsed));
+    for (const match of content.matchAll(/^Link:\s*(.+)$/gm)) {
+      const key = jobKeyFromLink(match[1]);
+      if (key) {
+        existingKeys.add(key);
+      }
+    }
+  }
+
+  let updated = 0;
+  for (const [scenarioId, stats] of byScenario) {
     if (updateScenarioLastRunStats(projectRoot, scenarioId, {
-      found,
-      added,
-      skipped,
-      ...(totalSeen !== null ? { totalSeen } : {}),
+      found: stats.found,
+      added: stats.added,
+      skipped: stats.skipped,
+      ...(stats.totalSeen !== null ? { totalSeen: stats.totalSeen } : {}),
     })) {
       updated += 1;
-      for (const match of content.matchAll(/^Link:\s*(.+)$/gm)) {
-        const key = jobKeyFromLink(match[1]);
-        if (key) {
-          existingKeys.add(key);
-        }
-      }
     }
   }
 
@@ -363,7 +404,7 @@ export function backfillScenarioRunStatsFromSession(projectRoot, sessionStartMs)
 
   const files = listSessionRawReportNames(reportsDir, sessionStartMs);
   const urlToId = loadScenarioUrlToId(projectRoot);
-  let updated = 0;
+  const byScenario = new Map();
 
   for (const fileName of files) {
     const filePath = path.join(reportsDir, fileName);
@@ -374,8 +415,8 @@ export function backfillScenarioRunStatsFromSession(projectRoot, sessionStartMs)
       continue;
     }
 
-    const { searchUrl, found, totalSeen, skipped } = parseRawFileJobStats(content, new Set());
-    const scenarioId = resolveScenarioIdForSearchUrl(urlToId, searchUrl);
+    const parsed = parseRawFileJobStats(content, new Set());
+    const scenarioId = resolveRawScenarioId(parsed, urlToId);
     if (!scenarioId) {
       continue;
     }
@@ -389,11 +430,17 @@ export function backfillScenarioRunStatsFromSession(projectRoot, sessionStartMs)
       return base === fileName || base.endsWith(`/${fileName}`);
     }).length;
 
+    const prev = byScenario.get(scenarioId) || { found: 0, added: 0, skipped: 0, totalSeen: null };
+    byScenario.set(scenarioId, mergeRunStats(prev, { ...parsed, added }));
+  }
+
+  let updated = 0;
+  for (const [scenarioId, stats] of byScenario) {
     if (updateScenarioLastRunStats(projectRoot, scenarioId, {
-      found,
-      added,
-      skipped,
-      ...(totalSeen !== null ? { totalSeen } : {}),
+      found: stats.found,
+      added: stats.added,
+      skipped: stats.skipped,
+      ...(stats.totalSeen !== null ? { totalSeen: stats.totalSeen } : {}),
     })) {
       updated += 1;
     }

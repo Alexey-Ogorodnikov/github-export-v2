@@ -101,6 +101,13 @@ export function extractJobKey(job) {
   const link = String(job?.link || "");
   const m = link.match(/\/jobs\/view\/(\d+)/i);
   if (m) return m[1];
+  try {
+    const u = new URL(link.trim());
+    const jk = u.searchParams.get("jk");
+    if (jk) return jk;
+  } catch {
+    /* not a URL */
+  }
   return link.trim();
 }
 

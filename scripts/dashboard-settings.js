@@ -1,7 +1,16 @@
 import fs from "node:fs";
 import path from "node:path";
+import {
+  AVAILABLE_SEARCH_SITES,
+  DEFAULT_SEARCH_SITE_IDS,
+  normalizeSearchSiteIds,
+} from "./search-sites.js";
+
+export { AVAILABLE_SEARCH_SITES, DEFAULT_SEARCH_SITE_IDS, normalizeSearchSiteIds };
 
 export const DEFAULT_MAX_JOBS_PER_SEARCH = 200;
+export const DEFAULT_JOB_POSTED_DAYS = 1;
+export const ALLOWED_JOB_POSTED_DAYS = [1, 2, 7];
 export const MAX_MANDATORY_TAGS = 5;
 export const DEFAULT_MANDATORY_TAGS = [
   { id: "tag-android", label: "Android" },
@@ -9,6 +18,7 @@ export const DEFAULT_MANDATORY_TAGS = [
   { id: "tag-kotlin", label: "Kotlin" },
   { id: "tag-ai", label: "AI" },
 ];
+export const DEFAULT_COMPANY_BLACKLIST = [];
 
 function settingsPath(projectRoot) {
   return path.join(projectRoot, "data", "dashboard-settings.json");
@@ -57,6 +67,30 @@ export function normalizeMandatoryTags(raw) {
   return next.length ? next : DEFAULT_MANDATORY_TAGS.map((tag) => ({ ...tag }));
 }
 
+export function normalizeCompanyBlacklist(raw) {
+  if (raw === undefined || raw === null) {
+    return [...DEFAULT_COMPANY_BLACKLIST];
+  }
+  if (!Array.isArray(raw)) {
+    return [...DEFAULT_COMPANY_BLACKLIST];
+  }
+  const seen = new Set();
+  const next = [];
+  for (const item of raw) {
+    const name = String(item || "").trim().slice(0, 80);
+    if (!name) {
+      continue;
+    }
+    const key = name.toLowerCase();
+    if (seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+    next.push(name);
+  }
+  return next;
+}
+
 export function normalizeMaxJobsPerSearch(value) {
   const parsed = Number.parseInt(value, 10);
   if (!Number.isFinite(parsed) || parsed < 1) {
@@ -65,25 +99,40 @@ export function normalizeMaxJobsPerSearch(value) {
   return Math.min(1000, parsed);
 }
 
+export function normalizeJobPostedDays(value) {
+  const parsed = Number.parseInt(value, 10);
+  if (ALLOWED_JOB_POSTED_DAYS.includes(parsed)) {
+    return parsed;
+  }
+  return DEFAULT_JOB_POSTED_DAYS;
+}
+
+function emptyDashboardSettings() {
+  return {
+    maxJobsPerSearch: DEFAULT_MAX_JOBS_PER_SEARCH,
+    jobPostedDays: DEFAULT_JOB_POSTED_DAYS,
+    mandatoryTags: DEFAULT_MANDATORY_TAGS.map((tag) => ({ ...tag })),
+    companyBlacklist: [...DEFAULT_COMPANY_BLACKLIST],
+    searchSiteIds: [...DEFAULT_SEARCH_SITE_IDS],
+  };
+}
+
 export function readDashboardSettings(projectRoot) {
   const filePath = settingsPath(projectRoot);
   if (!fs.existsSync(filePath)) {
-    return {
-      maxJobsPerSearch: DEFAULT_MAX_JOBS_PER_SEARCH,
-      mandatoryTags: DEFAULT_MANDATORY_TAGS.map((tag) => ({ ...tag })),
-    };
+    return emptyDashboardSettings();
   }
   try {
     const raw = JSON.parse(fs.readFileSync(filePath, "utf8"));
     return {
       maxJobsPerSearch: normalizeMaxJobsPerSearch(raw?.maxJobsPerSearch),
+      jobPostedDays: normalizeJobPostedDays(raw?.jobPostedDays),
       mandatoryTags: normalizeMandatoryTags(raw?.mandatoryTags),
+      companyBlacklist: normalizeCompanyBlacklist(raw?.companyBlacklist),
+      searchSiteIds: normalizeSearchSiteIds(raw?.searchSiteIds),
     };
   } catch {
-    return {
-      maxJobsPerSearch: DEFAULT_MAX_JOBS_PER_SEARCH,
-      mandatoryTags: DEFAULT_MANDATORY_TAGS.map((tag) => ({ ...tag })),
-    };
+    return emptyDashboardSettings();
   }
 }
 
@@ -94,10 +143,22 @@ export function writeDashboardSettings(projectRoot, patch) {
       patch?.maxJobsPerSearch === undefined
         ? current.maxJobsPerSearch
         : normalizeMaxJobsPerSearch(patch.maxJobsPerSearch),
+    jobPostedDays:
+      patch?.jobPostedDays === undefined
+        ? current.jobPostedDays
+        : normalizeJobPostedDays(patch.jobPostedDays),
     mandatoryTags:
       patch?.mandatoryTags === undefined
         ? current.mandatoryTags
         : normalizeMandatoryTags(patch.mandatoryTags),
+    companyBlacklist:
+      patch?.companyBlacklist === undefined
+        ? current.companyBlacklist
+        : normalizeCompanyBlacklist(patch.companyBlacklist),
+    searchSiteIds:
+      patch?.searchSiteIds === undefined
+        ? current.searchSiteIds
+        : normalizeSearchSiteIds(patch.searchSiteIds),
   };
   const dir = path.dirname(settingsPath(projectRoot));
   fs.mkdirSync(dir, { recursive: true });
@@ -109,12 +170,25 @@ export function getMaxJobsPerSearch(projectRoot) {
   return readDashboardSettings(projectRoot).maxJobsPerSearch;
 }
 
+export function getJobPostedDays(projectRoot) {
+  return readDashboardSettings(projectRoot).jobPostedDays;
+}
+
+export function getSearchSiteIds(projectRoot) {
+  return readDashboardSettings(projectRoot).searchSiteIds;
+}
+
 export function getDashboardSettingsForApi(projectRoot) {
   const settings = readDashboardSettings(projectRoot);
   return {
     ...settings,
     defaultMaxJobsPerSearch: DEFAULT_MAX_JOBS_PER_SEARCH,
+    defaultJobPostedDays: DEFAULT_JOB_POSTED_DAYS,
+    allowedJobPostedDays: ALLOWED_JOB_POSTED_DAYS,
     maxMandatoryTags: MAX_MANDATORY_TAGS,
     defaultMandatoryTags: DEFAULT_MANDATORY_TAGS,
+    defaultCompanyBlacklist: DEFAULT_COMPANY_BLACKLIST,
+    availableSearchSites: AVAILABLE_SEARCH_SITES,
+    defaultSearchSiteIds: DEFAULT_SEARCH_SITE_IDS,
   };
 }
