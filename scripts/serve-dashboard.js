@@ -36,7 +36,6 @@ import {
   startScenario,
   startUrlSearch,
 } from "./dashboard-run-manager.js";
-import { askOllamaAboutJob, mergeJobRecordsForOllama } from "./job-ollama-ask.js";
 import { ensureWinConsoleUtf8 } from "./win-console-utf8.js";
 
 ensureWinConsoleUtf8();
@@ -93,7 +92,13 @@ const server = createServer(async (req, res) => {
       res.setHeader("Content-Type", "application/json; charset=utf-8");
       if (req.method === "POST") {
         const body = await readRequestJson(req);
-        if (body?.maxJobsPerSearch === undefined && body?.mandatoryTags === undefined) {
+        if (
+          body?.maxJobsPerSearch === undefined &&
+          body?.jobPostedDays === undefined &&
+          body?.mandatoryTags === undefined &&
+          body?.companyBlacklist === undefined &&
+          body?.searchSiteIds === undefined
+        ) {
           res.writeHead(400).end(JSON.stringify({ ok: false, error: "missing_fields" }));
           return;
         }
@@ -238,7 +243,16 @@ const server = createServer(async (req, res) => {
       if (mode === "execute") {
         const action = typeof body?.action === "string" ? body.action.trim() : "";
         if (action === "run-all" || body?.runAll === true) {
-          result = startRunAll(projectRoot);
+          const scenarioIds = Array.isArray(body?.scenarioIds)
+            ? body.scenarioIds.map((id) => String(id || "").trim()).filter(Boolean)
+            : null;
+          if (scenarioIds && scenarioIds.length === 0) {
+            res.writeHead(400).end(JSON.stringify({ ok: false, error: "no_scenarios_selected" }));
+            return;
+          }
+          result = startRunAll(projectRoot, scenarioIds, {
+            shutdownWhenDone: body?.shutdownWhenDone === true,
+          });
           const status = result.ok ? 200 : result.error === "already_running" ? 409 : 400;
           res.writeHead(status).end(JSON.stringify(result));
           return;
@@ -365,41 +379,6 @@ const server = createServer(async (req, res) => {
         return;
       }
       res.writeHead(200).end(JSON.stringify({ ok: true, job_key: jobKey, applied }));
-      return;
-    }
-    if (requestPath === "/api/job-ask" && req.method === "POST") {
-      corsHeaders(res);
-      res.setHeader("Content-Type", "application/json; charset=utf-8");
-      const body = (await readRequestJson(req)) || {};
-      const question = String(body.question || body.job_question || "").trim();
-      if (!question) {
-        res.writeHead(400).end(JSON.stringify({ ok: false, error: "missing_question" }));
-        return;
-      }
-      let payload;
-      try {
-        payload = await readDashboardJsonPayload();
-      } catch {
-        try {
-          payload = await readDashboardSnapshot(projectRoot);
-        } catch {
-          res.writeHead(500).end(JSON.stringify({ ok: false, error: "read_failed" }));
-          return;
-        }
-      }
-      const job = resolveJobFromAskBody(body, payload);
-      if (!job) {
-        res.writeHead(404).end(JSON.stringify({ ok: false, error: "job_not_found" }));
-        return;
-      }
-      try {
-        const answer = await askOllamaAboutJob(job, question, { projectRoot });
-        res.writeHead(200).end(JSON.stringify({ ok: true, answer }));
-      } catch (e) {
-        const message = String(e?.message || e);
-        const status = /not running|question required/i.test(message) ? 400 : 503;
-        res.writeHead(status).end(JSON.stringify({ ok: false, error: "ollama_error", message }));
-      }
       return;
     }
     if (requestPath === "/api/remove-job" && req.method === "POST") {
@@ -622,41 +601,6 @@ function resolveJobKeyFromBody(body) {
 async function readDashboardJsonPayload() {
   const dashboardText = await readFile(dashboardJsonPath, "utf8");
   return JSON.parse(dashboardText);
-}
-
-function resolveJobFromAskBody(body, payload) {
-  const jobKey = typeof body?.job_key === "string" ? body.job_key.trim() : "";
-  const link = typeof body?.link === "string" ? body.link.trim() : "";
-  const jobs = Array.isArray(payload?.jobs) ? payload.jobs : [];
-  let stored = null;
-  for (const job of jobs) {
-    const key = extractJobKey(job);
-    if (jobKey && (key === jobKey || String(job.link || "").trim() === jobKey)) {
-      stored = job;
-      break;
-    }
-    if (link && String(job.link || "").trim() === link) {
-      stored = job;
-      break;
-    }
-  }
-  const client =
-    body?.job && typeof body.job === "object" && !Array.isArray(body.job) ? body.job : null;
-  if (stored && client) {
-    return mergeJobRecordsForOllama(stored, client);
-  }
-  if (stored) {
-    return stored;
-  }
-  if (
-    client &&
-    String(
-      client.title || client.description_preview || client.short_summary || client.link || "",
-    ).trim()
-  ) {
-    return client;
-  }
-  return null;
 }
 
 async function readRequestJson(req) {

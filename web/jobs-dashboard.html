@@ -27,29 +27,11 @@
         gap: 12px;
       }
       .card {
+        position: relative;
         border: 1px solid #ddd;
         border-radius: 8px;
         padding: 12px;
-      }
-      .card-head {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        gap: 12px;
-        margin-bottom: 6px;
-      }
-      .card-head-main {
-        flex: 1;
-        min-width: 0;
-      }
-      .card-title-row {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 6px;
-      }
-      .card-title-row .title {
-        margin: 0;
+        padding-right: 11rem;
       }
       .btn-remove {
         flex-shrink: 0;
@@ -69,6 +51,56 @@
         opacity: 0.55;
         cursor: not-allowed;
       }
+      .btn-hide-company {
+        flex-shrink: 0;
+        font-size: 13px;
+        padding: 6px 10px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        background: #fafafa;
+        cursor: pointer;
+      }
+      .btn-hide-company:hover:not(:disabled) {
+        background: #f3f0ff;
+        border-color: #7e57c2;
+        color: #4527a0;
+      }
+      .btn-hide-company:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+      .linkedin-link-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+      }
+      .linkedin-link-row a {
+        flex-shrink: 0;
+      }
+      .btn-copy-link {
+        flex-shrink: 0;
+        font-size: 13px;
+        padding: 4px 10px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        background: #fafafa;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      .btn-copy-link:hover:not(:disabled) {
+        background: #eef7ff;
+        border-color: #1976d2;
+        color: #0d47a1;
+      }
+      .btn-copy-link:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+      .blacklist-summary {
+        font-size: 13px;
+        color: #555;
+      }
       .btn-remove-all {
         font-size: 13px;
         padding: 5px 12px;
@@ -87,11 +119,13 @@
         cursor: not-allowed;
       }
       .card-actions {
+        position: absolute;
+        top: 12px;
+        right: 12px;
         display: flex;
         flex-direction: column;
         align-items: flex-end;
         gap: 8px;
-        flex-shrink: 0;
       }
       .applied-toggle {
         display: inline-flex;
@@ -119,98 +153,12 @@
       }
       .title {
         font-size: 18px;
-        margin: 0 0 6px;
+        margin: 0 0 4px;
       }
       .meta {
         font-size: 14px;
         color: #444;
         margin: 0 0 8px;
-      }
-      .card-head .job-ollama-panel {
-        margin-top: 8px;
-      }
-      .btn-ollama-toggle {
-        font-size: 13px;
-        padding: 6px 12px;
-        border: 1px solid #7b1fa2;
-        border-radius: 6px;
-        background: #f3e5f5;
-        color: #4a148c;
-        cursor: pointer;
-      }
-      .btn-ollama-toggle:hover {
-        background: #e1bee7;
-      }
-      .btn-ollama-toggle[aria-expanded="true"] {
-        background: #ce93d8;
-      }
-      .job-ollama-panel {
-        margin-top: 10px;
-        padding: 10px 12px;
-        border: 1px solid #d1c4e9;
-        border-radius: 8px;
-        background: #faf8ff;
-      }
-      .job-ollama-panel label {
-        display: block;
-        font-size: 13px;
-        color: #444;
-        margin-bottom: 6px;
-      }
-      .job-ollama-panel textarea {
-        width: 100%;
-        box-sizing: border-box;
-        min-height: 72px;
-        font-size: 14px;
-        padding: 8px 10px;
-        border: 1px solid #ccc;
-        border-radius: 6px;
-        resize: vertical;
-        font-family: inherit;
-      }
-      .job-ollama-actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        align-items: center;
-        margin-top: 8px;
-      }
-      .btn-ollama-ask {
-        font-size: 13px;
-        padding: 6px 14px;
-        border: 1px solid #1976d2;
-        border-radius: 6px;
-        background: #e3f2fd;
-        color: #0d47a1;
-        cursor: pointer;
-      }
-      .btn-ollama-ask:hover:not(:disabled) {
-        background: #bbdefb;
-      }
-      .btn-ollama-ask:disabled {
-        opacity: 0.6;
-        cursor: wait;
-      }
-      .job-ollama-answer {
-        margin: 10px 0 0;
-        padding: 10px;
-        font-size: 13px;
-        line-height: 1.45;
-        white-space: pre-wrap;
-        word-break: break-word;
-        background: #fff;
-        border: 1px solid #e0e0e0;
-        border-radius: 6px;
-        color: #222;
-      }
-      .job-ollama-answer.is-error {
-        color: #b71c1c;
-        border-color: #ef9a9a;
-        background: #ffebee;
-      }
-      .job-ollama-answer.is-loading {
-        color: #666;
-        font-style: italic;
       }
       .summary {
         margin: 0 0 10px;
@@ -362,6 +310,12 @@
         font-size: 13px;
         color: #555;
         margin: 0 0 8px;
+      }
+      .salary-line {
+        font-size: 13px;
+        color: #1a5f2a;
+        margin: 0 0 8px;
+        font-weight: 500;
       }
       .search-bar {
         display: flex;
@@ -576,6 +530,19 @@
         padding: 12px 0;
         border-bottom: 1px solid #e8e8e8;
       }
+      .scenario-select {
+        flex-shrink: 0;
+        display: flex;
+        align-items: flex-start;
+        padding-top: 2px;
+      }
+      .scenario-select input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        margin: 0;
+        cursor: pointer;
+        accent-color: #43a047;
+      }
       .scenario-row:last-child {
         border-bottom: none;
         padding-bottom: 0;
@@ -643,6 +610,20 @@
         border-bottom: 1px solid #e8e8e8;
         padding-bottom: 12px;
         margin-bottom: 4px;
+      }
+      .shutdown-when-done {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        color: #444;
+        cursor: pointer;
+        user-select: none;
+        white-space: nowrap;
+      }
+      .shutdown-when-done input {
+        margin: 0;
+        cursor: pointer;
       }
       .scenario-btn-test {
         background: #fff8e1;
@@ -834,6 +815,33 @@
         color: #555;
         line-height: 1.45;
       }
+      .search-sites-block {
+        margin-top: 10px;
+        width: 100%;
+      }
+      .search-sites-label {
+        display: block;
+        font-size: 14px;
+        color: #333;
+        margin-bottom: 6px;
+      }
+      .search-sites-controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 16px;
+        align-items: center;
+      }
+      .search-sites-controls label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        color: #333;
+      }
+      .search-sites-controls input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+      }
       .add-search-preview {
         margin: 8px 0 0;
         font-size: 13px;
@@ -924,10 +932,28 @@
                   inputmode="numeric"
                 />
               </label>
+              <label>
+                <span data-i18n="postedDays">Posted within</span>
+                <select id="jobPostedDays">
+                  <option value="1" data-i18n="day1">1 day</option>
+                  <option value="2" data-i18n="day2">2 days</option>
+                  <option value="7" data-i18n="day7">7 days</option>
+                </select>
+              </label>
             </div>
             <p id="maxJobsHint" class="launcher-settings-hint" data-i18n="maxJobsHint">
-              One value for all searches during full LinkedIn scrape. Enter a number from 1 to 1000.
+              One value for all searches during a full scrape. Enter a number from 1 to 1000.
             </p>
+            <p id="jobPostedDaysHint" class="launcher-settings-hint" data-i18n="postedDaysHint">
+              One period for all searches: date filter on each site and list labels (1, 2, or 7 days).
+            </p>
+            <div class="search-sites-block">
+              <span id="searchSitesLabel" class="search-sites-label" data-i18n="searchSites">Search sites</span>
+              <div id="searchSitesControls" class="search-sites-controls"></div>
+              <p id="searchSitesHint" class="launcher-settings-hint" data-i18n="searchSitesHint">
+                Each saved search runs on the selected sites.
+              </p>
+            </div>
           </div>
         </div>
         <div id="launcherGlobalActions" class="scenario-row launcher-global-actions" hidden>
@@ -941,6 +967,10 @@
             <button type="button" id="runAllBtn" class="scenario-btn scenario-btn-execute" data-i18n="runAll">
               Run all
             </button>
+            <label class="shutdown-when-done">
+              <input type="checkbox" id="shutdownWhenDoneChk" />
+              <span data-i18n="shutdownWhenDone">Turn off computer when done</span>
+            </label>
             <button type="button" id="refreshJobsBtn" class="scenario-btn scenario-btn-refresh" data-i18n="refreshJobs">
               Refresh list
             </button>
@@ -1045,6 +1075,32 @@
       </div>
     </dialog>
 
+    <dialog id="companyBlacklistDialog" class="tag-filters-dialog">
+      <div class="tag-filters-dialog-inner">
+        <h2 data-i18n="companyBlacklist">Company blacklist</h2>
+        <p class="tag-filters-dialog-help" data-i18n="companyBlacklistHelp">
+          Jobs from these companies are hidden from the list.
+        </p>
+        <ul id="companyBlacklistManageList" class="tag-filters-manage-list"></ul>
+        <p id="companyBlacklistEmptyHint" class="tag-filters-empty" hidden data-i18n="blacklistEmpty">No companies hidden.</p>
+        <div class="tag-filters-add-row">
+          <input
+            type="text"
+            id="companyBlacklistNewName"
+            maxlength="80"
+            data-i18n-placeholder="newCompanyPlaceholder"
+            placeholder="Company name"
+            autocomplete="off"
+          />
+          <button type="button" id="companyBlacklistAddBtn" class="btn-primary" data-i18n="add">Add</button>
+        </div>
+        <div class="tag-filters-dialog-actions">
+          <button type="button" id="companyBlacklistCancelBtn" data-i18n="cancel">Cancel</button>
+          <button type="button" id="companyBlacklistSaveBtn" class="btn-primary" data-i18n="save">Save</button>
+        </div>
+      </div>
+    </dialog>
+
     <dialog id="consoleLogDialog" class="console-log-dialog">
       <div class="console-log-dialog-inner">
         <h2 data-i18n="consoleLogHistory">Console log</h2>
@@ -1077,7 +1133,13 @@
           hideMenu: "Hide menu",
           settings: "Settings",
           maxJobs: "Max jobs",
-          maxJobsHint: "One value for all searches during full LinkedIn scrape. Enter a number from 1 to 1000.",
+          maxJobsHint: "One value for all searches during a full scrape. Enter a number from 1 to 1000.",
+          postedDays: "Posted within",
+          postedDaysHint: "One period for all searches: date filter on each site and list labels (1, 2, or 7 days).",
+          searchSites: "Search sites",
+          searchSitesHint: "Each saved search runs on the selected sites.",
+          searchSiteNeedOne: "Keep at least one search site selected.",
+          searchSitesSaved: "Search sites saved: {sites}.",
           addSearch: "Add search",
           searchUrlPlaceholder: "LinkedIn job search URL",
           searchUrlHint:
@@ -1107,12 +1169,20 @@
           test: "Test",
           execute: "Run",
           runAll: "Run all",
+          shutdownWhenDone: "Turn off computer when done",
           refreshJobs: "Refresh list",
           launcherActions: "Actions",
           launcherActionsHelp:
-            "Scrape LinkedIn and refresh the job list using the buttons below.",
+            "Scrape the selected sites and refresh the job list using the buttons below.",
           confirmRunAll:
-            "Run all saved searches?\n\nLinkedIn scrape + Ollama for every search — may take a long time.",
+            "Run all saved searches?\n\nScrape + Ollama for every search — may take a long time.",
+          confirmRunAllShutdown:
+            "Run all saved searches?\n\nScrape + Ollama for every search — may take a long time.\n\nThe computer will shut down 60 seconds after a successful finish.",
+          confirmRunSelected:
+            "Run {n} selected search(es)?\n\nScrape + Ollama for each — may take a long time.",
+          confirmRunSelectedShutdown:
+            "Run {n} selected search(es)?\n\nScrape + Ollama for each — may take a long time.\n\nThe computer will shut down 60 seconds after a successful finish.",
+          noScenariosSelected: "Select at least one search to run.",
           confirmRefresh:
             "Rebuild the job list from reports/ with Ollama?\n\nLinkedIn will not be opened.",
           rename: "Rename",
@@ -1133,6 +1203,9 @@
           mandatoryTags: "Mandatory tags",
           mandatoryTagsHelp:
             "Up to 5 filters. Each searches for its name in the job text. All enabled tags must match.",
+          leadPlus: "Lead+",
+          leadPlusHint:
+            "Show roles a step above IC: Team Lead, Tech Lead, Engineering Manager, Product/Project Owner, Staff/Principal, and similar.",
           noFiltersYet: "No filters yet.",
           newFilterPlaceholder: "New filter name",
           configure: "Configure",
@@ -1145,6 +1218,7 @@
             "Last run: {found} found · {added} added · {skipped} skipped · {total} total",
           scenarioStatsLineNoTotal:
             "Last run: {found} found · {added} added · {skipped} skipped",
+          scenarioStatsDateSuffix: " · {date}",
           scenarioStatsNone: "Last run: not yet executed",
           periodLast24h: "the last 24 hours",
           periodLast2d: "the last 2 days",
@@ -1199,6 +1273,7 @@
           enterNumberRange: "Enter a number from 1 to 1000.",
           settingsOnlyViaDashboard: "Settings are only available via npm.cmd run dashboard.",
           maxJobsSaved: "Max jobs: {n}",
+          postedDaysSaved: "Posted within: {label}",
           settingSaveFailed: "Could not save setting.",
           deleteSearchConfirm:
             'Delete search "{name}"?\n\nThis action cannot be undone.',
@@ -1219,8 +1294,23 @@
           statusLine: "{reportLabel} | Raw reports in index: {count}",
           uniqueJobs: "Unique jobs: {n}",
           uniqueJobsFiltered: "Unique jobs: {total} · Shown after filters: {filtered}",
+          uniqueJobsFilteredWithBlacklist:
+            "Unique jobs: {total} · Shown: {filtered} · Hidden by blacklist: {hidden}",
+          companyBlacklist: "Company blacklist",
+          companyBlacklistHelp: "Jobs from these companies are hidden from the list.",
+          companyBlacklistHint: "Hidden from list",
+          newCompanyPlaceholder: "Company name",
+          hideCompany: "Hide company",
+          hideCompanyTitle: "Add company to blacklist and hide all its jobs",
+          companyAlreadyBlacklisted: "This company is already on the blacklist.",
+          enterCompanyName: "Enter a company name.",
+          companyExists: "This company is already on the blacklist.",
+          blacklistSaveFailed: "Could not save blacklist.",
+          blacklistCount: "{n} companies",
+          blacklistEmpty: "No companies hidden",
           allWorkTypes: "All types",
           aiVerdictLabel: "AI in role (Ollama)",
+          salaryLabel: "Salary",
           aiVerdictAll: "AI in role: all",
           aiVerdictYes: "AI matters (yes)",
           aiVerdictNo: "No substantial AI (no)",
@@ -1249,19 +1339,15 @@
           summaryExpand: "Click to show full description",
           summaryCollapse: "Click to hide full description",
           untitled: "Untitled",
-          askOllama: "Ask Ollama",
-          askOllamaHide: "Hide Ollama",
-          askOllamaLabel: "Your question about this job",
-          askOllamaPlaceholder: "e.g. Is React Native required? Salary range mentioned?",
-          askOllamaSubmit: "Ask",
-          askOllamaLoading: "Thinking…",
-          askOllamaUnavailable: "Ollama unavailable. Run via npm.cmd run dashboard and start Ollama.",
-          askOllamaError: "Could not get an answer.",
           removeJob: "Remove",
           removeJobTitle: "Remove from list and dashboard-jobs.json",
+          copyLink: "Copy link",
+          copyLinkTitle: "Copy job link to clipboard",
+          copyLinkCopied: "Copied",
           appliedTitle: "Mark that you already applied to this job",
           notInterestedTitle: "Mark that this job is not interesting to you",
           linkedinDetails: "Full description (LinkedIn)",
+          indeedDetails: "Full description (Indeed)",
           aiUnknown: "AI: not classified",
           aiYes: "AI: yes",
           aiNo: "AI: no",
@@ -1304,7 +1390,14 @@
           settings: "Настройки",
           maxJobs: "Максимум вакансий",
           maxJobsHint:
-            "Одно значение для всех поисков при полном сборе с LinkedIn. Введите число от 1 до 1000.",
+            "Одно значение для всех поисков при полном сборе. Введите число от 1 до 1000.",
+          postedDays: "Период публикации",
+          postedDaysHint:
+            "Один период для всех поисков: фильтр даты на каждом сайте и подписи в списке (1, 2 или 7 дней).",
+          searchSites: "Сайты поиска",
+          searchSitesHint: "Каждый сохранённый поиск выполняется на выбранных сайтах.",
+          searchSiteNeedOne: "Оставьте хотя бы один сайт поиска.",
+          searchSitesSaved: "Сайты поиска сохранены: {sites}.",
           addSearch: "Добавить поиск",
           searchUrlPlaceholder: "Ссылка на поиск вакансий LinkedIn",
           searchUrlHint:
@@ -1334,12 +1427,20 @@
           test: "Тест",
           execute: "Выполнить",
           runAll: "Выполнить все",
+          shutdownWhenDone: "Выключить компьютер после завершения",
           refreshJobs: "Обновить список",
           launcherActions: "Действия",
           launcherActionsHelp:
-            "Сбор вакансий и обновление списка — кнопками ниже.",
+            "Сбор вакансий с выбранных сайтов и обновление списка — кнопками ниже.",
           confirmRunAll:
-            "Запустить все сохранённые поиски?\n\nСбор LinkedIn + Ollama по каждому — может занять много времени.",
+            "Запустить все сохранённые поиски?\n\nСбор + Ollama по каждому — может занять много времени.",
+          confirmRunAllShutdown:
+            "Запустить все сохранённые поиски?\n\nСбор + Ollama по каждому — может занять много времени.\n\nКомпьютер выключится через 60 секунд после успешного завершения.",
+          confirmRunSelected:
+            "Запустить {n} выбранных поиск(ов)?\n\nСбор + Ollama по каждому — может занять много времени.",
+          confirmRunSelectedShutdown:
+            "Запустить {n} выбранных поиск(ов)?\n\nСбор + Ollama по каждому — может занять много времени.\n\nКомпьютер выключится через 60 секунд после успешного завершения.",
+          noScenariosSelected: "Отметьте хотя бы один поиск для запуска.",
           confirmRefresh:
             "Пересобрать список из reports/ через Ollama?\n\nLinkedIn не откроется.",
           rename: "Переименовать",
@@ -1360,6 +1461,9 @@
           mandatoryTags: "Обязательные теги",
           mandatoryTagsHelp:
             "До 5 фильтров. Каждый ищет своё название в тексте вакансии. Включённые теги должны все совпасть.",
+          leadPlus: "Lead+",
+          leadPlusHint:
+            "Роли чуть выше чистого IC: Team Lead, Tech Lead, Engineering Manager, Product/Project Owner, Staff/Principal и похожие.",
           noFiltersYet: "Фильтров пока нет.",
           newFilterPlaceholder: "Название нового фильтра",
           configure: "Настроить",
@@ -1372,6 +1476,7 @@
             "Последний раз: найдено {found} · добавлено {added} · пропущено {skipped} · всего {total}",
           scenarioStatsLineNoTotal:
             "Последний раз: найдено {found} · добавлено {added} · пропущено {skipped}",
+          scenarioStatsDateSuffix: " · {date}",
           scenarioStatsNone: "Последний запуск: ещё не выполнялся",
           periodLast24h: "последние 24 часа",
           periodLast2d: "последние 2 дня",
@@ -1426,6 +1531,7 @@
           enterNumberRange: "Укажите число от 1 до 1000.",
           settingsOnlyViaDashboard: "Настройки доступны только через npm.cmd run dashboard.",
           maxJobsSaved: "Максимум вакансий: {n}",
+          postedDaysSaved: "Период публикации: {label}",
           settingSaveFailed: "Не удалось сохранить настройку.",
           deleteSearchConfirm:
             "Удалить поиск «{name}»?\n\nЭто действие нельзя отменить.",
@@ -1446,8 +1552,23 @@
           statusLine: "{reportLabel} | Raw-отчётов в индексе: {count}",
           uniqueJobs: "Уникальных вакансий: {n}",
           uniqueJobsFiltered: "Уникальных вакансий: {total} · В списке после фильтров: {filtered}",
+          uniqueJobsFilteredWithBlacklist:
+            "Уникальных вакансий: {total} · Показано: {filtered} · Скрыто чёрным списком: {hidden}",
+          companyBlacklist: "Чёрный список компаний",
+          companyBlacklistHelp: "Вакансии этих компаний не показываются в списке.",
+          companyBlacklistHint: "Скрыты из списка",
+          newCompanyPlaceholder: "Название компании",
+          hideCompany: "Скрыть компанию",
+          hideCompanyTitle: "Добавить компанию в чёрный список и скрыть все её вакансии",
+          companyAlreadyBlacklisted: "Эта компания уже в чёрном списке.",
+          enterCompanyName: "Введите название компании.",
+          companyExists: "Эта компания уже в чёрном списке.",
+          blacklistSaveFailed: "Не удалось сохранить чёрный список.",
+          blacklistCount: "{n} компаний",
+          blacklistEmpty: "Нет скрытых компаний",
           allWorkTypes: "Все типы",
           aiVerdictLabel: "ИИ в роли (Ollama)",
+          salaryLabel: "Зарплата",
           aiVerdictAll: "ИИ в роли: все",
           aiVerdictYes: "ИИ важен (да)",
           aiVerdictNo: "Без существенного ИИ (нет)",
@@ -1476,19 +1597,15 @@
           summaryExpand: "Нажмите, чтобы показать полное описание",
           summaryCollapse: "Нажмите, чтобы скрыть полное описание",
           untitled: "Без названия",
-          askOllama: "Спросить Ollama",
-          askOllamaHide: "Скрыть Ollama",
-          askOllamaLabel: "Ваш вопрос по этой вакансии",
-          askOllamaPlaceholder: "например: Нужен ли React Native? Указана ли зарплата?",
-          askOllamaSubmit: "Спросить",
-          askOllamaLoading: "Думаю…",
-          askOllamaUnavailable: "Ollama недоступна. Запустите npm.cmd run dashboard и Ollama.",
-          askOllamaError: "Не удалось получить ответ.",
           removeJob: "Удалить",
           removeJobTitle: "Убрать из списка и из dashboard-jobs.json",
+          copyLink: "скопировать ссылку",
+          copyLinkTitle: "Скопировать ссылку на вакансию",
+          copyLinkCopied: "Скопировано",
           appliedTitle: "Отметить, что вы уже подали заявку на эту вакансию",
           notInterestedTitle: "Отметить, что эта вакансия вам не интересна",
           linkedinDetails: "Подробное описание (LinkedIn)",
+          indeedDetails: "Подробное описание (Indeed)",
           aiUnknown: "ИИ: не классифицировано",
           aiYes: "ИИ: да",
           aiNo: "ИИ: нет",
@@ -1552,6 +1669,8 @@
         });
         const maxJobsInput = document.getElementById("maxJobsPerSearch");
         if (maxJobsInput) maxJobsInput.setAttribute("aria-label", t("maxJobs"));
+        const jobPostedDaysSelect = document.getElementById("jobPostedDays");
+        if (jobPostedDaysSelect) jobPostedDaysSelect.setAttribute("aria-label", t("postedDays"));
         const customSearchUrl = document.getElementById("customSearchUrl");
         if (customSearchUrl) customSearchUrl.setAttribute("aria-label", t("searchUrlPlaceholder"));
         const customSearchDisplayName = document.getElementById("customSearchDisplayName");
@@ -1569,6 +1688,7 @@
           keywordSearch: document.getElementById("keywordSearch")?.value ?? "",
           appliedStatusFilter: document.getElementById("appliedStatusFilter")?.value ?? "__all__",
           todayOnlyFilter: document.getElementById("todayOnlyFilter")?.checked ?? false,
+          leadPlusFilter: document.getElementById("leadPlusFilter")?.checked ?? false,
           workFilter: document.getElementById("workFilter")?.value ?? "__all__",
           aiVerdictFilter: document.getElementById("aiVerdictFilter")?.value ?? "__all__",
           reportSort: document.getElementById("reportSort")?.value ?? "report_desc",
@@ -1584,6 +1704,8 @@
         if (appliedStatusFilter) appliedStatusFilter.value = state.appliedStatusFilter;
         const todayOnlyFilter = document.getElementById("todayOnlyFilter");
         if (todayOnlyFilter) todayOnlyFilter.checked = state.todayOnlyFilter;
+        const leadPlusFilter = document.getElementById("leadPlusFilter");
+        if (leadPlusFilter) leadPlusFilter.checked = state.leadPlusFilter;
         const workFilter = document.getElementById("workFilter");
         if (workFilter) workFilter.value = state.workFilter;
         const aiVerdictFilter = document.getElementById("aiVerdictFilter");
@@ -1610,6 +1732,9 @@
         setCustomSearchEditMode(editingScenarioId);
         if (document.getElementById("tagFiltersDialog")?.open) {
           renderTagFiltersManageList();
+        }
+        if (document.getElementById("companyBlacklistDialog")?.open) {
+          renderCompanyBlacklistManageList();
         }
         if (lastData) {
           const state = captureFilterState();
@@ -1664,16 +1789,41 @@
         };
       }
 
+      function effectiveJobPostedDays() {
+        const days = Number(dashboardSettings.jobPostedDays);
+        return [1, 2, 7].includes(days) ? days : 1;
+      }
+
       const DEFAULT_MANDATORY_TAGS = [
         { id: "tag-android", label: "Android" },
         { id: "tag-mobile", label: "Mobile" },
         { id: "tag-kotlin", label: "Kotlin" },
         { id: "tag-ai", label: "AI" },
       ];
+      /**
+       * Lead+ = OR-группа: достаточно любого совпадения.
+       * Цель — роли чуть выше чистого IC (lead / manager / owner / staff / principal).
+       */
+      const LEAD_PLUS_PATTERNS = [
+        /\bteam[\s-]*lead(?:er|ership)?\b/,
+        /\btech(?:nical)?[\s-]*lead(?:er)?\b/,
+        /\b(?:project|product)[\s-]*(?:owner|manager)\b/,
+        /\bstaff[\s-]*(?:software[\s-]*)?(?:engineer|developer|eng)\b/,
+        /\bprincipal[\s-]*(?:software[\s-]*)?(?:engineer|developer|eng)\b/,
+        /\bhead[\s-]+of\b/,
+        /\b(?:engineering|eng|software|mobile|android|ios|platform|frontend|backend|full[\s-]*stack|tech|development|dev|people)[\s-]*(?:manager|lead)\b/,
+        /\blead[\s-]*(?:engineer|developer|dev)\b/,
+        /\bmanager\b/,
+        /\blead\b/,
+      ];
       const MAX_MANDATORY_TAGS = 5;
       const MANDATORY_TAGS_STORAGE_KEY = "linkedin-job-dashboard-mandatory-tags";
+      const COMPANY_BLACKLIST_STORAGE_KEY = "linkedin-job-dashboard-company-blacklist";
+      const DEFAULT_COMPANY_BLACKLIST = [];
       let mandatoryTags = DEFAULT_MANDATORY_TAGS.map((tag) => ({ ...tag }));
       let editingMandatoryTags = [];
+      let companyBlacklist = [...DEFAULT_COMPANY_BLACKLIST];
+      let editingCompanyBlacklist = [];
 
       let lastData = null;
       let lastJobsTotal = 0;
@@ -1845,13 +1995,25 @@
       let launcherMenuOpen = false;
       let launcherPollTimer = null;
       let launcherScenarios = [];
+      let launcherSelectedScenarioIds = new Set();
+      let launcherKnownScenarioIds = new Set();
       let launcherStatusLockUntil = 0;
       let lastLauncherRun = null;
       let consoleLogDialogOpen = false;
       let consoleLogRefreshTimer = null;
       let editingScenarioId = null;
-      let dashboardSettings = { maxJobsPerSearch: 200 };
+      let dashboardSettings = {
+        maxJobsPerSearch: 200,
+        jobPostedDays: 1,
+        searchSiteIds: ["linkedin", "indeed-ca"],
+        availableSearchSites: [
+          { id: "linkedin", label: "LinkedIn" },
+          { id: "indeed-ca", label: "Indeed Canada" },
+        ],
+      };
       let savingMaxJobs = false;
+      let savingJobPostedDays = false;
+      let savingSearchSites = false;
 
       const FALLBACK_SCENARIOS = [];
 
@@ -1860,6 +2022,41 @@
           return !scenario.builtin;
         }
         return !FALLBACK_SCENARIOS.some((fallback) => fallback.id === scenario?.id);
+      }
+
+      function syncLauncherScenarioSelection() {
+        const validIds = new Set(launcherScenarios.map((s) => s.id));
+        for (const id of [...launcherSelectedScenarioIds]) {
+          if (!validIds.has(id)) {
+            launcherSelectedScenarioIds.delete(id);
+          }
+        }
+        for (const id of [...launcherKnownScenarioIds]) {
+          if (!validIds.has(id)) {
+            launcherKnownScenarioIds.delete(id);
+          }
+        }
+        for (const s of launcherScenarios) {
+          if (!launcherKnownScenarioIds.has(s.id)) {
+            launcherKnownScenarioIds.add(s.id);
+            launcherSelectedScenarioIds.add(s.id);
+          }
+        }
+      }
+
+      function getSelectedScenarioIds() {
+        syncLauncherScenarioSelection();
+        return launcherScenarios
+          .filter((s) => launcherSelectedScenarioIds.has(s.id))
+          .map((s) => s.id);
+      }
+
+      function setScenarioSelected(scenarioId, selected) {
+        if (selected) {
+          launcherSelectedScenarioIds.add(scenarioId);
+        } else {
+          launcherSelectedScenarioIds.delete(scenarioId);
+        }
       }
 
       function applyLauncherMenuOpen(open) {
@@ -1893,20 +2090,7 @@
         const m = stored.match(AUTO_SCENARIO_DAYS_SUFFIX);
         if (!m) return stored;
         const suffix = m[1];
-        const daysMap = {
-          "1 день": 1,
-          "2 дня": 2,
-          "7 дней": 7,
-          "1 day": 1,
-          "2 days": 2,
-          "7 days": 7,
-        };
-        let days = daysMap[suffix];
-        if (days === undefined) {
-          const numMatch = suffix.match(/^(\d+)/);
-          days = numMatch ? Number.parseInt(numMatch[1], 10) : null;
-        }
-        if (!days) return stored;
+        const days = effectiveJobPostedDays();
         const dayLabels = getCustomDayLabels();
         const localized = dayLabels[days] || t("dayN", { n: days });
         if (suffix === localized) return stored;
@@ -1922,7 +2106,7 @@
         if (scenario.keywords) {
           return customSearchLabel({
             keywords: scenario.keywords,
-            days: scenario.days ?? 1,
+            days: effectiveJobPostedDays(),
             workType: scenario.workType || "any",
             country: scenario.country,
             city: scenario.city,
@@ -1937,7 +2121,7 @@
         if (scenario.keywords) {
           return buildCustomSearchDescription({
             keywords: scenario.keywords,
-            days: scenario.days ?? 1,
+            days: effectiveJobPostedDays(),
             workType: scenario.workType || "any",
             country: scenario.country,
             city: scenario.city,
@@ -1967,24 +2151,46 @@
         return { found, added, skipped, total };
       }
 
+      function formatLastRunAt(iso) {
+        const raw = String(iso || "").trim();
+        if (!raw) return "";
+        const d = new Date(raw);
+        if (Number.isNaN(d.getTime())) return "";
+        const locale = currentLang === "ru" ? "ru-RU" : "en-US";
+        return new Intl.DateTimeFormat(locale, {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        }).format(d);
+      }
+
       function scenarioDisplayStats(scenario) {
         const run = scenarioRunStats(scenario);
         if (!run) {
           return t("scenarioStatsNone");
         }
+        let line;
         if (run.total !== null) {
-          return t("scenarioStatsLine", {
+          line = t("scenarioStatsLine", {
             found: run.found,
             added: run.added,
             skipped: run.skipped,
             total: run.total,
           });
+        } else {
+          line = t("scenarioStatsLineNoTotal", {
+            found: run.found,
+            added: run.added,
+            skipped: run.skipped,
+          });
         }
-        return t("scenarioStatsLineNoTotal", {
-          found: run.found,
-          added: run.added,
-          skipped: run.skipped,
-        });
+        const date = formatLastRunAt(scenario?.lastRunStats?.at);
+        if (date) {
+          line += t("scenarioStatsDateSuffix", { date });
+        }
+        return line;
       }
 
       function formatRunLabel(run) {
@@ -2238,6 +2444,8 @@
           launcherPollTimer = null;
         }
         if (run.status === "done" || run.status === "error") {
+          const shutdownChk = document.getElementById("shutdownWhenDoneChk");
+          if (shutdownChk) shutdownChk.checked = false;
           await loadData();
           await reloadLauncherScenarios();
         }
@@ -2396,9 +2604,10 @@
           preview.textContent = t("invalidSearchUrl");
           return;
         }
-        const autoDesc = buildCustomSearchDescription(
-          parsed.keywords ? parsed : { ...parsed, keywords: parsed.country || "LinkedIn search" },
-        );
+        const autoDesc = buildCustomSearchDescription({
+          ...(parsed.keywords ? parsed : { ...parsed, keywords: parsed.country || "LinkedIn search" }),
+          days: effectiveJobPostedDays(),
+        });
         preview.textContent = displayName ? `${displayName} — ${autoDesc}` : autoDesc;
       }
 
@@ -2412,7 +2621,24 @@
           const action = body?.action;
           let confirmed = true;
           if (action === "run-all") {
-            confirmed = confirm(t("confirmRunAll"));
+            const selectedIds = Array.isArray(body?.scenarioIds)
+              ? body.scenarioIds.filter((id) => typeof id === "string" && id.trim())
+              : [];
+            if (selectedIds.length === 0) {
+              alert(t("noScenariosSelected"));
+              return;
+            }
+            const shutdownWhenDone =
+              document.getElementById("shutdownWhenDoneChk")?.checked === true;
+            body.shutdownWhenDone = shutdownWhenDone;
+            confirmed =
+              selectedIds.length === launcherScenarios.length
+                ? confirm(t(shutdownWhenDone ? "confirmRunAllShutdown" : "confirmRunAll"))
+                : confirm(
+                    t(shutdownWhenDone ? "confirmRunSelectedShutdown" : "confirmRunSelected", {
+                      n: selectedIds.length,
+                    }),
+                  );
           } else if (action === "refresh") {
             confirmed = confirm(t("confirmRefresh"));
           } else {
@@ -2556,6 +2782,18 @@
         if (!settings || typeof settings !== "object") return;
         dashboardSettings = {
           maxJobsPerSearch: Number(settings.maxJobsPerSearch) || 200,
+          jobPostedDays: [1, 2, 7].includes(Number(settings.jobPostedDays))
+            ? Number(settings.jobPostedDays)
+            : 1,
+          searchSiteIds: Array.isArray(settings.searchSiteIds) && settings.searchSiteIds.length
+            ? settings.searchSiteIds.map((id) => String(id || "").trim()).filter(Boolean)
+            : ["linkedin", "indeed-ca"],
+          availableSearchSites: Array.isArray(settings.availableSearchSites) && settings.availableSearchSites.length
+            ? settings.availableSearchSites
+            : [
+                { id: "linkedin", label: "LinkedIn" },
+                { id: "indeed-ca", label: "Indeed Canada" },
+              ],
         };
         if (Array.isArray(settings.mandatoryTags)) {
           mandatoryTags = normalizeMandatoryTagsClient(settings.mandatoryTags);
@@ -2565,7 +2803,18 @@
             /* ignore */
           }
         }
+        if (settings.companyBlacklist !== undefined) {
+          companyBlacklist = normalizeCompanyBlacklistClient(settings.companyBlacklist);
+          try {
+            localStorage.setItem(COMPANY_BLACKLIST_STORAGE_KEY, JSON.stringify(companyBlacklist));
+          } catch {
+            /* ignore */
+          }
+        }
         syncMaxJobsInput();
+        syncJobPostedDaysSelect();
+        renderSearchSitesControls();
+        renderLauncherScenarios();
         if (lastData) {
           const checkedTagIds = getCheckedMandatoryTagIds();
           buildToolbar(lastData);
@@ -2618,6 +2867,53 @@
         }
       }
 
+      function normalizeCompanyBlacklistClient(raw) {
+        if (raw === undefined || raw === null) {
+          return [...DEFAULT_COMPANY_BLACKLIST];
+        }
+        if (!Array.isArray(raw)) {
+          return [...DEFAULT_COMPANY_BLACKLIST];
+        }
+        const seen = new Set();
+        const next = [];
+        for (const item of raw) {
+          const name = String(item || "").trim().slice(0, 80);
+          if (!name) continue;
+          const key = name.toLowerCase();
+          if (seen.has(key)) continue;
+          seen.add(key);
+          next.push(name);
+        }
+        return next;
+      }
+
+      function loadCompanyBlacklistFromLocalStorage() {
+        try {
+          const raw = localStorage.getItem(COMPANY_BLACKLIST_STORAGE_KEY);
+          if (!raw) return;
+          companyBlacklist = normalizeCompanyBlacklistClient(JSON.parse(raw));
+        } catch {
+          /* ignore */
+        }
+      }
+
+      function isCompanyBlacklisted(company) {
+        const name = String(company || "").trim().toLowerCase();
+        if (!name) return false;
+        return companyBlacklist.some((item) => item.toLowerCase() === name);
+      }
+
+      function countBlacklistedJobs(jobs) {
+        return (jobs || []).filter((job) => isCompanyBlacklisted(job.company)).length;
+      }
+
+      function formatCompanyBlacklistSummary() {
+        if (!companyBlacklist.length) {
+          return t("blacklistEmpty");
+        }
+        return t("blacklistCount", { n: companyBlacklist.length });
+      }
+
       function getCheckedMandatoryTagIds() {
         return new Set(
           mandatoryTags.filter((tag) => document.getElementById(tag.id)?.checked).map((tag) => tag.id),
@@ -2637,7 +2933,17 @@
             patch.maxJobsPerSearch === undefined
               ? dashboardSettings.maxJobsPerSearch || 200
               : patch.maxJobsPerSearch,
+          jobPostedDays:
+            patch.jobPostedDays === undefined
+              ? effectiveJobPostedDays()
+              : patch.jobPostedDays,
           mandatoryTags: patch.mandatoryTags === undefined ? mandatoryTags : patch.mandatoryTags,
+          companyBlacklist:
+            patch.companyBlacklist === undefined ? companyBlacklist : patch.companyBlacklist,
+          searchSiteIds:
+            patch.searchSiteIds === undefined
+              ? dashboardSettings.searchSiteIds || ["linkedin", "indeed-ca"]
+              : patch.searchSiteIds,
         };
       }
 
@@ -2794,10 +3100,254 @@
         });
       }
 
+      async function saveCompanyBlacklist(nextBlacklist) {
+        const normalized = normalizeCompanyBlacklistClient(nextBlacklist);
+        await ensureDashboardApiBase();
+        if (!canPostToDashboardApi() && !dashboardServerBase) {
+          companyBlacklist = normalized;
+          try {
+            localStorage.setItem(COMPANY_BLACKLIST_STORAGE_KEY, JSON.stringify(companyBlacklist));
+          } catch {
+            /* ignore */
+          }
+          if (lastData) {
+            const checkedTagIds = getCheckedMandatoryTagIds();
+            buildToolbar(lastData);
+            restoreCheckedMandatoryTagIds(checkedTagIds);
+            applyView();
+          }
+          return { ok: true };
+        }
+        let lastError = "";
+        for (const url of dashboardApiUrls("settings")) {
+          try {
+            const r = await fetch(url, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(buildSettingsPostBody({ companyBlacklist: normalized })),
+            });
+            const payload = await r.json().catch(() => ({}));
+            if (!r.ok) {
+              lastError = formatSettingsError(payload.message || payload.error || t("serverError", { status: r.status }));
+              continue;
+            }
+            applyDashboardSettings({ ...(payload.settings || {}), companyBlacklist: normalized });
+            return { ok: true };
+          } catch (e) {
+            lastError = String(e?.message || e);
+          }
+        }
+        return { ok: false, error: lastError || t("blacklistSaveFailed") };
+      }
+
+      function renderCompanyBlacklistManageList() {
+        const list = document.getElementById("companyBlacklistManageList");
+        const emptyHint = document.getElementById("companyBlacklistEmptyHint");
+        if (!list) return;
+        list.innerHTML = "";
+        if (emptyHint) {
+          emptyHint.hidden = editingCompanyBlacklist.length > 0;
+        }
+        for (const name of editingCompanyBlacklist) {
+          const item = document.createElement("li");
+          item.className = "tag-filters-manage-item";
+          const label = document.createElement("span");
+          label.textContent = name;
+          const btnDelete = document.createElement("button");
+          btnDelete.type = "button";
+          btnDelete.className = "btn-tag-delete";
+          btnDelete.textContent = t("delete");
+          btnDelete.addEventListener("click", () => {
+            editingCompanyBlacklist = editingCompanyBlacklist.filter((item) => item !== name);
+            renderCompanyBlacklistManageList();
+          });
+          item.appendChild(label);
+          item.appendChild(btnDelete);
+          list.appendChild(item);
+        }
+      }
+
+      function openCompanyBlacklistDialog() {
+        const dialog = document.getElementById("companyBlacklistDialog");
+        if (!dialog) return;
+        editingCompanyBlacklist = [...companyBlacklist];
+        renderCompanyBlacklistManageList();
+        const input = document.getElementById("companyBlacklistNewName");
+        if (input) {
+          input.value = "";
+        }
+        if (typeof dialog.showModal === "function") {
+          dialog.showModal();
+          input?.focus();
+        }
+      }
+
+      function closeCompanyBlacklistDialog() {
+        document.getElementById("companyBlacklistDialog")?.close?.();
+      }
+
+      function addEditingCompanyBlacklist() {
+        const input = document.getElementById("companyBlacklistNewName");
+        const name = String(input?.value || "").trim().slice(0, 80);
+        if (!name) {
+          alert(t("enterCompanyName"));
+          input?.focus();
+          return;
+        }
+        if (editingCompanyBlacklist.some((item) => item.toLowerCase() === name.toLowerCase())) {
+          alert(t("companyExists"));
+          input?.focus();
+          return;
+        }
+        editingCompanyBlacklist.push(name);
+        if (input) input.value = "";
+        renderCompanyBlacklistManageList();
+        input?.focus();
+      }
+
+      async function commitCompanyBlacklistDialog() {
+        const btn = document.getElementById("companyBlacklistSaveBtn");
+        if (btn) btn.disabled = true;
+        try {
+          const result = await saveCompanyBlacklist(editingCompanyBlacklist);
+          if (!result.ok) {
+            alert(result.error || t("saveFailed"));
+            return;
+          }
+          closeCompanyBlacklistDialog();
+        } finally {
+          if (btn) btn.disabled = false;
+        }
+      }
+
+      async function addCompanyToBlacklist(companyName) {
+        const name = String(companyName || "").trim().slice(0, 80);
+        if (!name || name === t("companyUnknown")) return;
+        if (isCompanyBlacklisted(name)) {
+          alert(t("companyAlreadyBlacklisted"));
+          return;
+        }
+        const result = await saveCompanyBlacklist([...companyBlacklist, name]);
+        if (!result.ok) {
+          alert(result.error || t("blacklistSaveFailed"));
+        }
+      }
+
+      function setupCompanyBlacklistDialog() {
+        document.getElementById("companyBlacklistAddBtn")?.addEventListener("click", addEditingCompanyBlacklist);
+        document.getElementById("companyBlacklistSaveBtn")?.addEventListener("click", () => {
+          commitCompanyBlacklistDialog();
+        });
+        document.getElementById("companyBlacklistCancelBtn")?.addEventListener("click", closeCompanyBlacklistDialog);
+        document.getElementById("companyBlacklistNewName")?.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            addEditingCompanyBlacklist();
+          }
+        });
+        document.getElementById("companyBlacklistDialog")?.addEventListener("cancel", (e) => {
+          e.preventDefault();
+          closeCompanyBlacklistDialog();
+        });
+      }
+
       function syncMaxJobsInput() {
         const input = document.getElementById("maxJobsPerSearch");
         if (!input) return;
         input.value = String(dashboardSettings.maxJobsPerSearch || 200);
+      }
+
+      function syncJobPostedDaysSelect() {
+        const select = document.getElementById("jobPostedDays");
+        if (!select) return;
+        select.value = String(effectiveJobPostedDays());
+      }
+
+      function jobDetailsLabel(link) {
+        return /indeed\./i.test(String(link || "")) ? t("indeedDetails") : t("linkedinDetails");
+      }
+
+      function renderSearchSitesControls() {
+        const container = document.getElementById("searchSitesControls");
+        if (!container) return;
+        const sites = Array.isArray(dashboardSettings.availableSearchSites)
+          ? dashboardSettings.availableSearchSites
+          : [];
+        const enabled = new Set(dashboardSettings.searchSiteIds || []);
+        container.innerHTML = sites.map((site) => {
+          const id = String(site?.id || "").trim();
+          const label = String(site?.label || id).trim();
+          if (!id) return "";
+          const checked = enabled.has(id) ? " checked" : "";
+          return `<label><input type="checkbox" data-search-site="${escapeAttr(id)}"${checked} /> ${escapeHtml(label)}</label>`;
+        }).join("");
+        container.querySelectorAll("[data-search-site]").forEach((input) => {
+          input.addEventListener("change", () => {
+            commitSearchSites();
+          });
+        });
+      }
+
+      function readSearchSiteIdsFromUi() {
+        return [...document.querySelectorAll("#searchSitesControls [data-search-site]:checked")]
+          .map((el) => String(el.getAttribute("data-search-site") || "").trim())
+          .filter(Boolean);
+      }
+
+      async function commitSearchSites() {
+        const nextIds = readSearchSiteIdsFromUi();
+        if (nextIds.length === 0) {
+          renderSearchSitesControls();
+          alert(t("searchSiteNeedOne"));
+          return;
+        }
+        const current = dashboardSettings.searchSiteIds || [];
+        if (nextIds.length === current.length && nextIds.every((id, i) => id === current[i])) {
+          return;
+        }
+        await saveSearchSiteIds(nextIds);
+      }
+
+      async function saveSearchSiteIds(value) {
+        if (savingSearchSites) return;
+        const ids = Array.isArray(value) ? value.map((id) => String(id || "").trim()).filter(Boolean) : [];
+        if (!ids.length) return;
+        await ensureDashboardApiBase();
+        if (!canPostToDashboardApi() && !dashboardServerBase) {
+          alert(t("settingsOnlyViaDashboard"));
+          renderSearchSitesControls();
+          return;
+        }
+        savingSearchSites = true;
+        let lastError = "";
+        try {
+          for (const url of dashboardApiUrls("settings")) {
+            try {
+              const r = await fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(buildSettingsPostBody({ searchSiteIds: ids })),
+              });
+              const payload = await r.json().catch(() => ({}));
+              if (!r.ok) {
+                lastError = formatSettingsError(payload.message || payload.error || t("serverError", { status: r.status }));
+                continue;
+              }
+              applyDashboardSettings(payload.settings || { searchSiteIds: ids });
+              const labels = (dashboardSettings.availableSearchSites || [])
+                .filter((site) => (dashboardSettings.searchSiteIds || []).includes(site.id))
+                .map((site) => site.label);
+              showConsoleBarMessage(t("searchSitesSaved", { sites: labels.join(", ") || ids.join(", ") }));
+              return;
+            } catch (e) {
+              lastError = String(e?.message || e);
+            }
+          }
+          alert(lastError || t("settingSaveFailed"));
+          renderSearchSitesControls();
+        } finally {
+          savingSearchSites = false;
+        }
       }
 
       async function commitMaxJobsInput() {
@@ -2830,6 +3380,63 @@
             /* next */
           }
         }
+      }
+
+      async function saveJobPostedDays(value) {
+        if (savingJobPostedDays) return;
+        const parsed = Number.parseInt(String(value), 10);
+        if (![1, 2, 7].includes(parsed)) return;
+        if (parsed === effectiveJobPostedDays()) {
+          syncJobPostedDaysSelect();
+          return;
+        }
+        await ensureDashboardApiBase();
+        if (!canPostToDashboardApi() && !dashboardServerBase) {
+          alert(t("settingsOnlyViaDashboard"));
+          syncJobPostedDaysSelect();
+          return;
+        }
+        savingJobPostedDays = true;
+        let lastError = "";
+        try {
+          for (const url of dashboardApiUrls("settings")) {
+            try {
+              const r = await fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(buildSettingsPostBody({ jobPostedDays: parsed })),
+              });
+              const payload = await r.json().catch(() => ({}));
+              if (!r.ok) {
+                lastError = formatSettingsError(payload.message || payload.error || t("serverError", { status: r.status }));
+                continue;
+              }
+              applyDashboardSettings(payload.settings || { jobPostedDays: parsed });
+              const dayLabels = getCustomDayLabels();
+              showConsoleBarMessage(
+                t("postedDaysSaved", { label: dayLabels[parsed] || t("dayN", { n: parsed }) }),
+              );
+              return;
+            } catch (e) {
+              lastError = String(e?.message || e);
+            }
+          }
+          alert(lastError || t("settingSaveFailed"));
+          syncJobPostedDaysSelect();
+        } finally {
+          savingJobPostedDays = false;
+        }
+      }
+
+      async function commitJobPostedDaysSelect() {
+        const select = document.getElementById("jobPostedDays");
+        if (!select) return;
+        const parsed = Number.parseInt(String(select.value).trim(), 10);
+        if (![1, 2, 7].includes(parsed)) {
+          syncJobPostedDaysSelect();
+          return;
+        }
+        await saveJobPostedDays(parsed);
       }
 
       async function saveMaxJobsPerSearch(value) {
@@ -2880,6 +3487,8 @@
         }
         row.hidden = false;
         syncMaxJobsInput();
+        syncJobPostedDaysSelect();
+        renderSearchSitesControls();
         const input = document.getElementById("maxJobsPerSearch");
         input?.addEventListener("blur", () => {
           commitMaxJobsInput();
@@ -2889,6 +3498,10 @@
             e.preventDefault();
             input.blur();
           }
+        });
+        const daysSelect = document.getElementById("jobPostedDays");
+        daysSelect?.addEventListener("change", () => {
+          commitJobPostedDaysSelect();
         });
       }
 
@@ -3130,9 +3743,22 @@
           unavailable.hidden = true;
         }
 
+        syncLauncherScenarioSelection();
+
         for (const s of launcherScenarios) {
           const row = document.createElement("div");
           row.className = "scenario-row";
+
+          const select = document.createElement("div");
+          select.className = "scenario-select";
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.checked = launcherSelectedScenarioIds.has(s.id);
+          checkbox.setAttribute("aria-label", scenarioDisplayTitle(s));
+          checkbox.addEventListener("change", () => {
+            setScenarioSelected(s.id, checkbox.checked);
+          });
+          select.appendChild(checkbox);
 
           const text = document.createElement("div");
           text.className = "scenario-text";
@@ -3191,6 +3817,7 @@
             actions.appendChild(btnDelete);
           }
 
+          row.appendChild(select);
           row.appendChild(text);
           row.appendChild(actions);
           container.appendChild(row);
@@ -3203,7 +3830,12 @@
         row.hidden = !canPostToDashboardApi();
 
         document.getElementById("runAllBtn")?.addEventListener("click", () => {
-          postRunRequest({ action: "run-all" }, "execute");
+          const scenarioIds = getSelectedScenarioIds();
+          if (!scenarioIds.length) {
+            alert(t("noScenariosSelected"));
+            return;
+          }
+          postRunRequest({ action: "run-all", scenarioIds }, "execute");
         });
         document.getElementById("refreshJobsBtn")?.addEventListener("click", () => {
           postRunRequest({ action: "refresh" }, "execute");
@@ -3513,7 +4145,20 @@
               </div>
               <div class="toolbar-group-body tag-filters-row">
                 <button type="button" id="tagFiltersConfigureBtn" class="btn-tag-config">${escapeHtml(t("configure"))}</button>
-                <div class="tag-controls">${tagCheckboxes}</div>
+                <div class="tag-controls">
+                  <label title="${escapeAttr(t("leadPlusHint"))}"><input type="checkbox" id="leadPlusFilter" data-lead-plus-filter="" /> ${escapeHtml(t("leadPlus"))}</label>
+                  ${tagCheckboxes}
+                </div>
+              </div>
+            </section>
+            <section class="toolbar-group toolbar-group-blacklist" aria-label="${escapeAttr(t("companyBlacklist"))}">
+              <div class="toolbar-group-head">
+                <div class="toolbar-group-title">${escapeHtml(t("companyBlacklist"))}</div>
+                <span class="toolbar-group-subtitle">${escapeHtml(t("companyBlacklistHint"))}</span>
+              </div>
+              <div class="toolbar-group-body tag-filters-row">
+                <button type="button" id="companyBlacklistConfigureBtn" class="btn-tag-config">${escapeHtml(t("configure"))}</button>
+                <span id="companyBlacklistSummary" class="blacklist-summary">${escapeHtml(formatCompanyBlacklistSummary())}</span>
               </div>
             </section>
             <section class="toolbar-group toolbar-group-actions" aria-label="${escapeAttr(t("actions"))}">
@@ -3530,10 +4175,12 @@
         document.getElementById("reportSort").addEventListener("change", applyView);
         document.getElementById("workFilter").addEventListener("change", applyView);
         document.getElementById("aiVerdictFilter").addEventListener("change", applyView);
+        document.getElementById("leadPlusFilter")?.addEventListener("change", applyView);
         for (const cb of toolbar.querySelectorAll("[data-tag-filter]")) {
           cb.addEventListener("change", applyView);
         }
         document.getElementById("tagFiltersConfigureBtn")?.addEventListener("click", openTagFiltersDialog);
+        document.getElementById("companyBlacklistConfigureBtn")?.addEventListener("click", openCompanyBlacklistDialog);
         document.getElementById("removeAllJobsBtn").addEventListener("click", removeAllJobs);
       }
 
@@ -3610,6 +4257,7 @@
 
       function dashboardFiltersActive() {
         const todayOnly = document.getElementById("todayOnlyFilter")?.checked;
+        const leadPlus = document.getElementById("leadPlusFilter")?.checked;
         const work = document.getElementById("workFilter")?.value || "__all__";
         const ai = document.getElementById("aiVerdictFilter")?.value || "__all__";
         const appliedStatus = document.getElementById("appliedStatusFilter")?.value || "__all__";
@@ -3617,6 +4265,7 @@
         const anyTag = mandatoryTags.some((tag) => document.getElementById(tag.id)?.checked);
         return (
           todayOnly ||
+          leadPlus ||
           work !== "__all__" ||
           ai !== "__all__" ||
           appliedStatus !== "__all__" ||
@@ -3629,8 +4278,16 @@
         const countEl = document.getElementById("count");
         if (!countEl) return;
         const total = lastJobsTotal;
-        if (dashboardFiltersActive()) {
-          countEl.textContent = t("uniqueJobsFiltered", { total, filtered: filteredCount });
+        const hiddenByBlacklist = countBlacklistedJobs(lastData?.jobs || []);
+        if (dashboardFiltersActive() || hiddenByBlacklist > 0) {
+          countEl.textContent =
+            hiddenByBlacklist > 0
+              ? t("uniqueJobsFilteredWithBlacklist", {
+                  total,
+                  filtered: filteredCount,
+                  hidden: hiddenByBlacklist,
+                })
+              : t("uniqueJobsFiltered", { total, filtered: filteredCount });
         } else {
           countEl.textContent = t("uniqueJobs", { n: total });
         }
@@ -3731,7 +4388,8 @@
         const kwRaw = document.getElementById("keywordSearch")?.value ?? "";
         const sortMode = document.getElementById("reportSort")?.value || "report_desc";
         const todayOnly = document.getElementById("todayOnlyFilter")?.checked;
-        let list = [...(lastData.jobs || [])];
+        const leadPlus = document.getElementById("leadPlusFilter")?.checked;
+        let list = [...(lastData.jobs || [])].filter((j) => !isCompanyBlacklisted(j.company));
         if (todayOnly) {
           list = list.filter((j) => jobFromTodayReport(j));
         }
@@ -3760,6 +4418,9 @@
           if (!document.getElementById(tag.id)?.checked) continue;
           list = list.filter((j) => jobMatchesTagFilter(j, tag));
         }
+        if (leadPlus) {
+          list = list.filter((j) => jobMatchesLeadPlusFilter(j));
+        }
         list = sortJobsByReportTime(list, sortMode);
         updateJobsCountLine(list.length);
         renderJobCards(list);
@@ -3781,6 +4442,8 @@
           job.short_summary,
           job.description_preview,
           job.ai_reason || job.ai_reason_ru,
+          job.experience_years,
+          job.salary,
           ...(Array.isArray(job.ai_keywords) ? job.ai_keywords : []),
           ...(Array.isArray(job.tags) ? job.tags : []),
         ];
@@ -3795,6 +4458,11 @@
           return /\bai\b/.test(h) || h.includes("artificial intelligence");
         }
         return h.includes(label);
+      }
+
+      function jobMatchesLeadPlusFilter(job) {
+        const h = jobKeywordHaystack(job);
+        return LEAD_PLUS_PATTERNS.some((re) => re.test(h));
       }
 
       function formatJobDescriptionText(job, text) {
@@ -3860,10 +4528,18 @@
           const dk = clientJobKey(job);
           const applied = isJobApplied(job);
           const notInterested = isJobNotInterested(job);
+          const hideCompanyBtn =
+            safeCompany !== t("companyUnknown") && !isCompanyBlacklisted(safeCompany)
+              ? `<button type="button" class="btn-hide-company" data-blacklist-company="" data-company-name="${escapeAttr(safeCompany)}" title="${escapeAttr(t("hideCompanyTitle"))}">${escapeHtml(t("hideCompany"))}</button>`
+              : "";
           const removeBtn =
             dk !== ""
               ? `<button type="button" class="btn-remove" data-remove-job="" data-job-key="${escapeAttr(encodeURIComponent(dk))}" title="${escapeAttr(t("removeJobTitle"))}">${escapeHtml(t("removeJob"))}</button>`
               : "";
+          const jobLink = String(job.link || "").trim();
+          const copyLinkBtn = jobLink
+            ? `<button type="button" class="btn-copy-link" data-copy-job-link="" data-job-link="${escapeAttr(jobLink)}" title="${escapeAttr(t("copyLinkTitle"))}">${escapeHtml(t("copyLink"))}</button>`
+            : "";
           const appliedToggle =
             dk !== ""
               ? `<label class="applied-toggle" title="${escapeAttr(t("appliedTitle"))}">
@@ -3883,57 +4559,35 @@
           updateJobCardClasses(card, applied, notInterested);
 
           card.innerHTML = `
-            <div class="card-head">
-              <div class="card-head-main">
-                <div class="card-title-row">
-                  <h2 class="title">${escapeHtml(safeTitle)}</h2>
-                  ${buildJobOllamaToggle(dk)}
-                </div>
-                ${buildJobOllamaPanel(dk)}
-              </div>
-              <div class="card-actions">
-                ${appliedToggle}
-                ${notInterestedToggle}
-                ${removeBtn}
-              </div>
+            <div class="card-actions">
+              ${appliedToggle}
+              ${notInterestedToggle}
+              ${hideCompanyBtn}
+              ${removeBtn}
             </div>
+            <h2 class="title">${escapeHtml(safeTitle)}</h2>
             <p class="meta">${escapeHtml(safeCompany)}</p>
             <p class="ai-line">${aiLineHtml(job)}</p>
             <p><span class="badge">${escapeHtml(safeType)}</span>${escapeHtml(job.location || "")}</p>
+            ${formatSalaryLine(job)}
             ${aiBlock}
             ${buildJobSummaryHtml(job)}
-            <p><a href="${escapeAttr(job.link || "#")}" target="_blank" rel="noopener noreferrer">${escapeHtml(t("linkedinDetails"))}</a></p>
+            <p class="linkedin-link-row">
+              <a href="${escapeAttr(job.link || "#")}" target="_blank" rel="noopener noreferrer">${escapeHtml(jobDetailsLabel(job.link))}</a>
+              ${copyLinkBtn}
+            </p>
             ${buildVerificationBlock(job)}
           `;
           container.appendChild(card);
         }
-        setupJobOllamaHandlers();
+        setupJobSummaryHandlers();
       }
 
-      function buildJobOllamaToggle(jobKeyEnc) {
-        if (!jobKeyEnc || !canPostToDashboardApi()) return "";
-        return `<button type="button" class="btn-ollama-toggle" data-ollama-toggle data-job-key="${escapeAttr(jobKeyEnc)}" aria-expanded="false">
-                ${escapeHtml(t("askOllama"))}
-              </button>`;
-      }
+      let jobSummaryHandlersBound = false;
 
-      function buildJobOllamaPanel(jobKeyEnc) {
-        if (!jobKeyEnc || !canPostToDashboardApi()) return "";
-        return `<div class="job-ollama-panel" data-ollama-panel data-job-key="${escapeAttr(jobKeyEnc)}" hidden>
-                <label>${escapeHtml(t("askOllamaLabel"))}</label>
-                <textarea data-ollama-question rows="3" placeholder="${escapeAttr(t("askOllamaPlaceholder"))}"></textarea>
-                <div class="job-ollama-actions">
-                  <button type="button" class="btn-ollama-ask" data-ollama-submit data-job-key="${escapeAttr(jobKeyEnc)}">${escapeHtml(t("askOllamaSubmit"))}</button>
-                </div>
-                <div class="job-ollama-answer" data-ollama-answer hidden></div>
-              </div>`;
-      }
-
-      let jobOllamaHandlersBound = false;
-
-      function setupJobOllamaHandlers() {
-        if (jobOllamaHandlersBound) return;
-        jobOllamaHandlersBound = true;
+      function setupJobSummaryHandlers() {
+        if (jobSummaryHandlersBound) return;
+        jobSummaryHandlersBound = true;
         const container = document.getElementById("jobs");
         if (!container) return;
 
@@ -3941,25 +4595,6 @@
           const summaryToggle = ev.target.closest("[data-summary-toggle]");
           if (summaryToggle) {
             toggleJobSummary(summaryToggle);
-            return;
-          }
-          const toggle = ev.target.closest("[data-ollama-toggle]");
-          if (toggle) {
-            const panel = toggle.closest(".card")?.querySelector("[data-ollama-panel]");
-            if (!panel) return;
-            const open = panel.hidden;
-            panel.hidden = !open;
-            toggle.setAttribute("aria-expanded", open ? "true" : "false");
-            toggle.textContent = open ? t("askOllamaHide") : t("askOllama");
-            if (open) {
-              panel.querySelector("[data-ollama-question]")?.focus();
-            }
-            return;
-          }
-          const submit = ev.target.closest("[data-ollama-submit]");
-          if (submit) {
-            ev.preventDefault();
-            submitJobOllamaQuestion(submit);
           }
         });
 
@@ -3970,77 +4605,6 @@
           ev.preventDefault();
           toggleJobSummary(summaryToggle);
         });
-      }
-
-      async function submitJobOllamaQuestion(submitBtn) {
-        if (!lastData) return;
-        const enc = submitBtn.getAttribute("data-job-key");
-        if (!enc) return;
-        let jobKey;
-        try {
-          jobKey = decodeURIComponent(enc);
-        } catch {
-          return;
-        }
-        const card = submitBtn.closest(".card");
-        const panel = card?.querySelector("[data-ollama-panel]");
-        const questionEl = panel?.querySelector("[data-ollama-question]");
-        const answerEl = panel?.querySelector("[data-ollama-answer]");
-        const question = String(questionEl?.value || "").trim();
-        if (!question) {
-          questionEl?.focus();
-          return;
-        }
-        const job = (lastData.jobs || []).find((j) => clientJobKey(j) === jobKey);
-        if (!job) return;
-
-        if (!canPostToDashboardApi() && !dashboardServerBase) {
-          alert(t("askOllamaUnavailable"));
-          return;
-        }
-
-        submitBtn.disabled = true;
-        if (answerEl) {
-          answerEl.hidden = false;
-          answerEl.className = "job-ollama-answer is-loading";
-          answerEl.textContent = t("askOllamaLoading");
-        }
-
-        let lastError = t("askOllamaError");
-        try {
-          for (const url of dashboardApiUrls("job-ask")) {
-            try {
-              const r = await fetch(url, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  job_key: jobKey,
-                  question,
-                  link: job.link || "",
-                }),
-                signal: AbortSignal.timeout(190000),
-              });
-              const payload = await r.json().catch(() => ({}));
-              if (!r.ok) {
-                lastError = payload.message || lastError;
-                continue;
-              }
-              if (answerEl) {
-                answerEl.className = "job-ollama-answer";
-                answerEl.textContent = String(payload.answer || "").trim() || t("askOllamaError");
-              }
-              return;
-            } catch (e) {
-              lastError = String(e?.message || e);
-            }
-          }
-          if (answerEl) {
-            answerEl.className = "job-ollama-answer is-error";
-            answerEl.textContent = lastError;
-          }
-        } finally {
-          submitBtn.disabled = false;
-        }
       }
 
       function aiLineHtml(job) {
@@ -4060,6 +4624,12 @@
         return `<span class="${cls}">${escapeHtml(label)}</span>`;
       }
 
+      function formatSalaryLine(job) {
+        const salary = String(job.salary || "").trim();
+        if (!salary) return "";
+        return `<p class="salary-line"><span class="muted">${escapeHtml(t("salaryLabel"))}:</span> ${escapeHtml(salary)}</p>`;
+      }
+
       function formatAiBlock(job) {
         const kws = Array.isArray(job.ai_keywords) ? job.ai_keywords.filter(Boolean) : [];
         const kwLine =
@@ -4068,7 +4638,15 @@
             : "";
         const aiQuote = String(job.ai_report_quote || "").trim();
         const aiReason = String(job.ai_reason || job.ai_reason_ru || "").trim();
-        const aiText = aiQuote || aiReason;
+        const experienceYears = String(job.experience_years || "").trim();
+        let aiText = aiQuote || aiReason;
+        if (experienceYears) {
+          if (aiText) {
+            aiText = `${aiText.replace(/\.\s*$/, "").trim()}. ${experienceYears}`;
+          } else {
+            aiText = experienceYears;
+          }
+        }
         const reason = aiText
           ? `<p class="ai-reason"><span class="muted">Ollama:</span> ${escapeHtml(aiText)}</p>`
           : "";
@@ -4245,7 +4823,77 @@
         }
       });
 
+      async function copyTextToClipboard(text) {
+        const value = String(text || "");
+        if (!value) return false;
+        try {
+          if (navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(value);
+            return true;
+          }
+        } catch {
+          /* fall through */
+        }
+        try {
+          const ta = document.createElement("textarea");
+          ta.value = value;
+          ta.setAttribute("readonly", "");
+          ta.style.position = "fixed";
+          ta.style.left = "-9999px";
+          document.body.appendChild(ta);
+          ta.select();
+          const ok = document.execCommand("copy");
+          document.body.removeChild(ta);
+          return ok;
+        } catch {
+          return false;
+        }
+      }
+
+      function flashCopyLinkButton(btn) {
+        if (!btn) return;
+        const prevLabel = btn.textContent;
+        const prevTitle = btn.getAttribute("title") || "";
+        btn.textContent = t("copyLinkCopied");
+        btn.setAttribute("title", t("copyLinkCopied"));
+        btn.disabled = true;
+        window.setTimeout(() => {
+          btn.textContent = prevLabel;
+          btn.setAttribute("title", prevTitle || t("copyLinkTitle"));
+          btn.disabled = false;
+        }, 1500);
+      }
+
       document.getElementById("jobs").addEventListener("click", async (ev) => {
+        const copyBtn = ev.target.closest("button[data-copy-job-link]");
+        if (copyBtn) {
+          const jobLink = copyBtn.getAttribute("data-job-link") || "";
+          if (!jobLink) return;
+          copyBtn.disabled = true;
+          try {
+            const copied = await copyTextToClipboard(jobLink);
+            if (copied) {
+              flashCopyLinkButton(copyBtn);
+            } else {
+              copyBtn.disabled = false;
+            }
+          } catch (e) {
+            console.warn(String(e?.message || e));
+            copyBtn.disabled = false;
+          }
+          return;
+        }
+        const hideBtn = ev.target.closest("button[data-blacklist-company]");
+        if (hideBtn) {
+          const companyName = hideBtn.getAttribute("data-company-name") || "";
+          hideBtn.disabled = true;
+          try {
+            await addCompanyToBlacklist(companyName);
+          } finally {
+            hideBtn.disabled = false;
+          }
+          return;
+        }
         const btn = ev.target.closest("button[data-remove-job]");
         if (!btn || !lastData) return;
         const enc = btn.getAttribute("data-job-key");
@@ -4348,7 +4996,9 @@
         await ensureDashboardApiBase();
         await initLauncher();
         loadMandatoryTagsFromLocalStorage();
+        loadCompanyBlacklistFromLocalStorage();
         setupTagFiltersDialog();
+        setupCompanyBlacklistDialog();
         await loadDashboardSettings();
         updateCustomSearchPreview();
         await loadData();

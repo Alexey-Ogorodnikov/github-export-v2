@@ -8,7 +8,7 @@ const opts = parseCliFlags(process.argv);
 const sessionStart = Date.now();
 process.env.PREPROCESS_SESSION_START_MS = sessionStartMs();
 
-console.log("today: collecting LinkedIn reports...");
+console.log("today: collecting job reports...");
 let code = runNodeScript("scripts/run-today.js");
 if (code !== 0) {
   process.exit(code);

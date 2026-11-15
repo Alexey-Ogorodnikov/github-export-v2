@@ -7,8 +7,12 @@ import {
   buildTestPreviewSpawnFromUrl,
 } from "./dashboard-pipelines.js";
 import { buildScenarioFromParams, getScenario } from "./dashboard-scenarios.js";
+import { getJobPostedDays, getSearchSiteIds } from "./dashboard-settings.js";
+import { rewriteLinkedInPostedDays } from "./linkedin-search-url.js";
+import { isIndeedJobsSearchUrl, rewriteIndeedPostedDays } from "./indeed-search-url.js";
+import { buildEnabledSiteSearchUrls } from "./search-sites.js";
 
-/** @type {{ status: string, scenarioId: string|null, mode: string|null, label: string|null, startedAt: string|null, finishedAt: string|null, exitCode: number|null, message: string }} */
+/** @type {{ status: string, scenarioId: string|null, mode: string|null, label: string|null, startedAt: string|null, finishedAt: string|null, exitCode: number|null, message: string, shutdownWhenDone: boolean }} */
 let runState = {
   status: "idle",
   scenarioId: null,
@@ -18,6 +22,7 @@ let runState = {
   finishedAt: null,
   exitCode: null,
   message: "",
+  shutdownWhenDone: false,
 };
 
 let activeChild = null;
@@ -58,6 +63,35 @@ function delay(ms) {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
+}
+
+const SHUTDOWN_DELAY_SEC = 60;
+
+/** Schedule OS power-off after a successful run-all. Returns a short status message. */
+function scheduleSystemShutdown(delaySec = SHUTDOWN_DELAY_SEC) {
+  const seconds = Math.max(1, Math.floor(Number(delaySec) || SHUTDOWN_DELAY_SEC));
+  try {
+    if (process.platform === "win32") {
+      spawn(
+        "shutdown",
+        [
+          "/s",
+          "/t",
+          String(seconds),
+          "/c",
+          `Dashboard Run all finished. Shutting down in ${seconds}s. Cancel: shutdown /a`,
+        ],
+        { stdio: "ignore", windowsHide: true },
+      );
+      return `Shutdown scheduled in ${seconds}s. Cancel: shutdown /a`;
+    }
+    spawn("shutdown", ["-h", `+${Math.max(1, Math.ceil(seconds / 60))}`], {
+      stdio: "ignore",
+    });
+    return `Shutdown scheduled in ~${seconds}s. Cancel: shutdown -c`;
+  } catch (err) {
+    return `Failed to schedule shutdown: ${String(err?.message || err)}`;
+  }
 }
 
 async function stopTestPreviewChild() {
@@ -169,6 +203,7 @@ function attachChildLogging(projectRoot, child, label) {
     runState.status = "error";
     runState.finishedAt = new Date().toISOString();
     runState.message = String(err?.message || err);
+    runState.shutdownWhenDone = false;
     activeChild = null;
   });
 
@@ -176,10 +211,19 @@ function attachChildLogging(projectRoot, child, label) {
     runState.exitCode = code ?? 1;
     runState.finishedAt = new Date().toISOString();
     runState.status = code === 0 ? "done" : "error";
-    runState.message =
-      code === 0
-        ? "Готово."
-        : `Завершено с ошибкой (код ${code}). Подробности: reports/run.log`;
+    const wantShutdown = runState.shutdownWhenDone === true;
+    runState.shutdownWhenDone = false;
+    if (code === 0) {
+      let message = "Готово.";
+      if (wantShutdown) {
+        const shutdownMsg = scheduleSystemShutdown(SHUTDOWN_DELAY_SEC);
+        message = `Готово. ${shutdownMsg}`;
+        appendRunLog(projectRoot, `\n${shutdownMsg}\n`);
+      }
+      runState.message = message;
+    } else {
+      runState.message = `Завершено с ошибкой (код ${code}). Подробности: reports/run.log`;
+    }
     activeChild = null;
   });
 
@@ -254,7 +298,17 @@ export async function startUrlSearch(projectRoot, url, label, mode) {
   return startUrlRun(projectRoot, trimmedUrl, label || "Custom search", runId, mode);
 }
 
+function applyGlobalPostedDays(projectRoot, url) {
+  const days = getJobPostedDays(projectRoot);
+  const trimmed = String(url || "").trim();
+  if (isIndeedJobsSearchUrl(trimmed)) {
+    return rewriteIndeedPostedDays(trimmed, days);
+  }
+  return rewriteLinkedInPostedDays(trimmed, days);
+}
+
 async function startUrlRun(projectRoot, url, label, runId, mode) {
+  const resolvedUrl = applyGlobalPostedDays(projectRoot, url);
   const normalizedMode = mode === "test" ? "test" : "execute";
 
   if (normalizedMode === "execute" && runState.status === "running" && activeChild) {
@@ -268,7 +322,7 @@ async function startUrlRun(projectRoot, url, label, runId, mode) {
 
     await stopTestPreviewChild();
 
-    const spawnSpec = buildTestPreviewSpawnFromUrl(projectRoot, url, runId, label);
+    const spawnSpec = buildTestPreviewSpawnFromUrl(projectRoot, resolvedUrl, runId, label);
     if (!spawnSpec) {
       return { ok: false, error: "invalid_url" };
     }
@@ -282,6 +336,7 @@ async function startUrlRun(projectRoot, url, label, runId, mode) {
       finishedAt: null,
       exitCode: null,
       message: "Запуск теста…",
+      shutdownWhenDone: false,
     };
 
     appendRunLog(
@@ -314,6 +369,7 @@ async function startUrlRun(projectRoot, url, label, runId, mode) {
         finishedAt: new Date().toISOString(),
         exitCode: 1,
         message: result.run?.message || "Ошибка теста",
+        shutdownWhenDone: false,
       };
       try {
         killProcessTree(child);
@@ -333,6 +389,7 @@ async function startUrlRun(projectRoot, url, label, runId, mode) {
       finishedAt: null,
       exitCode: null,
       message: result.run.message,
+      shutdownWhenDone: false,
     };
 
     testPreviewChild = child;
@@ -347,7 +404,7 @@ async function startUrlRun(projectRoot, url, label, runId, mode) {
 
   await stopTestPreviewChild();
 
-  const pipeline = buildExecutePipelineFromUrl(url, runId, label);
+  const pipeline = buildExecutePipelineFromUrl(resolvedUrl, runId, label);
   if (!pipeline) {
     return { ok: false, error: "invalid_url" };
   }
@@ -370,6 +427,7 @@ async function startUrlRun(projectRoot, url, label, runId, mode) {
     finishedAt: null,
     exitCode: null,
     message: "Запущено…",
+    shutdownWhenDone: false,
   };
 
   attachChildLogging(projectRoot, child, `execute ${runId} — ${label}`);
@@ -404,10 +462,30 @@ export async function startScenario(projectRoot, scenarioId, mode) {
   if (!scenario) {
     return { ok: false, error: "unknown_scenario" };
   }
+  if (mode === "test") {
+    const siteUrls = buildEnabledSiteSearchUrls({
+      url: scenario.url,
+      keywords: scenario.keywords,
+      workType: scenario.workType,
+      country: scenario.country,
+      city: scenario.city,
+      days: getJobPostedDays(projectRoot),
+      siteIds: getSearchSiteIds(projectRoot),
+    });
+    const testUrl = siteUrls[0]?.url || scenario.url;
+    return startUrlRun(projectRoot, testUrl, scenario.title, scenarioId, mode);
+  }
   return startUrlRun(projectRoot, scenario.url, scenario.title, scenarioId, mode);
 }
 
-function startBackgroundScript(projectRoot, scriptRel, label, runId) {
+function startBackgroundScript(
+  projectRoot,
+  scriptRel,
+  label,
+  runId,
+  extraEnv = {},
+  options = {},
+) {
   if (runState.status === "running" && activeChild) {
     return { ok: false, error: "already_running", run: getRunStatus() };
   }
@@ -415,7 +493,7 @@ function startBackgroundScript(projectRoot, scriptRel, label, runId) {
   const scriptPath = path.join(projectRoot, scriptRel);
   const child = spawn(process.execPath, [scriptPath], {
     cwd: projectRoot,
-    env: { ...process.env, DASHBOARD_SKIP_SERVE: "1" },
+    env: { ...process.env, DASHBOARD_SKIP_SERVE: "1", ...extraEnv },
     stdio: ["ignore", "pipe", "pipe"],
     windowsHide: false,
   });
@@ -430,19 +508,29 @@ function startBackgroundScript(projectRoot, scriptRel, label, runId) {
     finishedAt: null,
     exitCode: null,
     message: "Запущено…",
+    shutdownWhenDone: options.shutdownWhenDone === true,
   };
 
   attachChildLogging(projectRoot, child, `execute ${runId} — ${label}`);
   return { ok: true, run: getRunStatus() };
 }
 
-/** All custom-searches: LinkedIn scrape + Ollama → dashboard-jobs.json */
-export function startRunAll(projectRoot) {
+/** All custom-searches (or a subset): LinkedIn scrape + Ollama → dashboard-jobs.json */
+export function startRunAll(projectRoot, scenarioIds = null, options = {}) {
+  const ids = Array.isArray(scenarioIds)
+    ? scenarioIds.map((id) => String(id || "").trim()).filter(Boolean)
+    : [];
+  const label =
+    ids.length > 0 ? `Выбранные поиски (${ids.length})` : "Все сохранённые поиски";
+  const extraEnv =
+    ids.length > 0 ? { RUN_TODAY_SEARCH_IDS: ids.join(",") } : {};
   return startBackgroundScript(
     projectRoot,
     "scripts/run-today-live.js",
-    "Все сохранённые поиски",
+    label,
     "run-all",
+    extraEnv,
+    { shutdownWhenDone: options.shutdownWhenDone === true },
   );
 }
 

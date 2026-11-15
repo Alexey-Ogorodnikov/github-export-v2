@@ -1,6 +1,7 @@
 import { readdir, readFile, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { writeDashboardSnapshot } from "./dashboard-db.js";
+import { readDashboardSnapshot, writeDashboardSnapshot } from "./dashboard-db.js";
+import { extractCompensationLines } from "./job-ollama-ask.js";
 import {
   listSessionRawReportNames,
   persistBatchScenarioRunStats,
@@ -201,7 +202,7 @@ if (rawFiles.length === 0) {
 const rebuild = isTruthyEnv(process.env.PREPROCESS_REBUILD);
 if (rebuild) {
   preprocessResetWallClock();
-  const ollamaModel = process.env.OLLAMA_MODEL || "llama3.2:3b";
+  const ollamaModel = process.env.OLLAMA_MODEL || "mistral-nemo:12b";
   const ollamaHost = process.env.OLLAMA_HOST || "http://127.0.0.1:11434";
   preprocessLog(`Full rebuild (PREPROCESS_REBUILD=1), raw files: ${rawFiles.length}`);
   preprocessLog(`Ollama: ${ollamaHost}, model: ${ollamaModel} (keep this window open — work in progress)`);
@@ -266,6 +267,20 @@ if (!previous) {
   } catch {
     previous = null;
   }
+}
+
+try {
+  const dbSnap = readDashboardSnapshot(projectRoot);
+  const jsonCount = Array.isArray(previous?.jobs) ? previous.jobs.length : 0;
+  const dbCount = Array.isArray(dbSnap?.jobs) ? dbSnap.jobs.length : 0;
+  if (dbCount > jsonCount) {
+    preprocessLog(
+      `dashboard.db has ${dbCount} jobs, JSON has ${jsonCount} — using DB so incremental merge does not wipe the list.`,
+    );
+    previous = dbSnap;
+  }
+} catch {
+  /* no db snapshot */
 }
 
 const canResume =
@@ -467,7 +482,7 @@ if (canResume) {
       parts.push(`${appended.length} new`);
     }
     if (backfill.length > 0) {
-      parts.push(`${backfill.length} unclassified`);
+      parts.push(`${backfill.length} backfill`);
     }
     preprocessLog(`Ollama for ${ollamaQueue.length} job(s) (${parts.join(", ")}, 2 requests each)…`);
   }
@@ -628,6 +643,8 @@ function extractJobsFromRaw(rawContent, sourceFile) {
       ai_verdict: null,
       ai_keywords: [],
       ai_reason: "",
+      experience_years: "",
+      salary: "",
       ai_report_quote: aiReportQuote,
       // Salary often lives in the card snippet, not in Full description.
       job_card_text: jobCard.slice(0, 2000),
@@ -850,7 +867,7 @@ function detectWorkType(text) {
 }
 
 function summarizeWithOllama(job) {
-  const model = process.env.OLLAMA_MODEL || "llama3.2:3b";
+  const model = process.env.OLLAMA_MODEL || "mistral-nemo:12b";
   const lang = inferPostingLanguage(job);
   const langLabel = lang === "fr" ? "French" : "English";
   const prompt = [
@@ -901,37 +918,75 @@ function finalizeOllamaSummaryText(text) {
   return s || String(text || "").trim();
 }
 
+function buildJobBodyForOllama(job) {
+  const card = String(job.job_card_text || "").trim();
+  const description = String(job.description_preview || "").trim();
+  const quote = String(job.ai_report_quote || "").trim();
+  const parts = [];
+  if (card) {
+    parts.push("Job card (LinkedIn snippet — compensation may appear here only):", card);
+  }
+  if (description) {
+    parts.push("Full description:", description);
+  }
+  if (
+    quote &&
+    description &&
+    !description.includes(quote.slice(0, Math.min(quote.length, 80)))
+  ) {
+    parts.push("---", "Listing excerpt flagged for AI/IA wording:", quote);
+  }
+  return parts.join("\n\n");
+}
+
+function inferSalaryFromText(job) {
+  const lines = extractCompensationLines(job.job_card_text, job.description_preview);
+  if (lines.length === 0) {
+    return "";
+  }
+  return lines.slice(0, 3).join("; ").slice(0, 120);
+}
+
 function classifyAiRoleWithOllama(job) {
-  const model = process.env.OLLAMA_MODEL || "llama3.2:3b";
+  const model = process.env.OLLAMA_MODEL || "mistral-nemo:12b";
   const lang = inferPostingLanguage(job);
   const langLabel = lang === "fr" ? "French" : "English";
-  const quote = String(job.ai_report_quote || "").trim();
-  const descriptionBody =
-    quote && !String(job.description_preview || "").includes(quote.slice(0, Math.min(quote.length, 80)))
-      ? `${job.description_preview}\n\n---\nListing excerpt flagged for AI/IA wording:\n${quote}`
-      : job.description_preview;
+  const descriptionBody = buildJobBodyForOllama(job);
+  const regexSalaryHint = inferSalaryFromText(job);
   const prompt = [
-    'Reply with ONLY one JSON object (no markdown), keys: "verdict","keywords","reason".',
+    'Reply with ONLY one JSON object (no markdown), keys: "verdict","keywords","reason","experience_years","salary".',
     'verdict: "yes" if this role substantially involves AI/ML engineering, LLM/RAG/agents, MLOps, or daily use of AI dev tools (Copilot, Cursor, ChatGPT API) as core work.',
     'verdict: "no" for ordinary mobile/web/backend roles with no meaningful AI/ML in responsibilities.',
     'verdict: "maybe" if AI is only buzzword, vague "AI-powered product", or unclear.',
     'verdict: "maybe" (not "no") if the JD explicitly asks to integrate AI workflows/tools or expects an AI/IA-minded engineer, even when the primary title is mobile/platform/general software.',
     'keywords: array of short English tokens seen or implied (e.g. "LLM","copilot","pytorch","rag") max 8 items.',
     `reason: one short sentence (max 140 chars) in ${langLabel} only, explaining the verdict. Do not use Russian.`,
+    'experience_years: required years of professional experience if stated in the JD (e.g. "5+ years", "3–5 years", "10+ years", "New grad", "0–2 years"). Empty string "" if not mentioned.',
+    'salary: compensation exactly as written in the posting (salary range, hourly rate, CA$/USD/CAD, benefits pay mention). Quote verbatim; empty string "" if not mentioned. Never invent dollar amounts.',
     "",
     `Title: ${job.title}`,
     `Company: ${job.company}`,
     "",
-    "Description:",
+    ...(regexSalaryHint
+      ? [`Possible compensation lines detected (verify and quote exactly if valid): ${regexSalaryHint}`, ""]
+      : []),
     descriptionBody,
   ].join("\n");
 
-  return runOllama(model, prompt, { temperature: 0.15, num_predict: 400 })
-    .then((text) => normalizeAiClassification(parseJsonObjectFromOllama(text)))
+  return runOllama(model, prompt, { temperature: 0.15, num_predict: 450 })
+    .then((text) => {
+      const normalized = normalizeAiClassification(parseJsonObjectFromOllama(text));
+      if (!normalized.salary) {
+        normalized.salary = inferSalaryFromText(job);
+      }
+      return normalized;
+    })
     .catch(() => ({
       ai_verdict: "maybe",
       ai_keywords: [],
       ai_reason: "AI classification unavailable (Ollama did not respond).",
+      experience_years: "",
+      salary: inferSalaryFromText(job),
     }));
 }
 
@@ -992,11 +1047,45 @@ function normalizeAiClassification(obj) {
     .trim()
     .slice(0, 220);
 
+  const experience_years = normalizeExperienceYears(
+    obj.experience_years ?? obj.years_experience ?? obj.experience,
+  );
+  const salary = normalizeSalary(
+    obj.salary ?? obj.compensation ?? obj.pay ?? obj.salary_range,
+  );
+
   return {
     ai_verdict,
     ai_keywords: keywords,
     ai_reason: ai_reason || "—",
+    experience_years,
+    salary,
   };
+}
+
+function normalizeSalary(value) {
+  let s = String(value ?? "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 120);
+  if (!s || /^(not specified|none|n\/a|unknown|unclear|—|-)$/i.test(s)) {
+    return "";
+  }
+  if (/^(no salary|not mentioned|not listed|unspecified)$/i.test(s)) {
+    return "";
+  }
+  return s;
+}
+
+function normalizeExperienceYears(value) {
+  let s = String(value ?? "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 30);
+  if (!s || /^(not specified|none|n\/a|unknown|unclear|—|-)$/i.test(s)) {
+    return "";
+  }
+  return s;
 }
 
 async function runOllama(model, prompt, generateOptions = null) {
@@ -1091,14 +1180,28 @@ function extractAiMentionQuote(fullDescription) {
 async function preprocessOllamaForOneJob(job, index, total, recentTotals, tag = "") {
   const label = String(job.title || "Untitled").replace(/\s+/g, " ").slice(0, 72);
   const t0 = Date.now();
-  job.short_summary = await summarizeWithOllama(job);
-  const t1 = Date.now();
-  Object.assign(job, await classifyAiRoleWithOllama(job));
-  job.ai_classified_at = new Date().toISOString();
-  const t2 = Date.now();
+  const summary = String(job.short_summary || "").trim();
+  const verdict = String(job.ai_verdict || "").toLowerCase();
+  const needsSummary = !summary || summary.includes("Summary unavailable");
+  const needsClassify =
+    !["yes", "no", "maybe"].includes(verdict) || !String(job.salary ?? "").trim();
 
-  const summarySec = ((t1 - t0) / 1000).toFixed(1);
-  const classifySec = ((t2 - t1) / 1000).toFixed(1);
+  let summarySec = "0.0";
+  let classifySec = "0.0";
+
+  if (needsSummary) {
+    job.short_summary = await summarizeWithOllama(job);
+    summarySec = ((Date.now() - t0) / 1000).toFixed(1);
+  }
+
+  if (needsClassify) {
+    const tClassify = Date.now();
+    Object.assign(job, await classifyAiRoleWithOllama(job));
+    job.ai_classified_at = new Date().toISOString();
+    classifySec = ((Date.now() - tClassify) / 1000).toFixed(1);
+  }
+
+  const t2 = Date.now();
   const totalMs = t2 - t0;
   recentTotals.push(totalMs);
   if (recentTotals.length > 8) recentTotals.shift();
@@ -1121,7 +1224,10 @@ function needsOllamaPreprocess(job) {
   if (!summary || summary.includes("Summary unavailable")) {
     return true;
   }
-  return !["yes", "no", "maybe"].includes(verdict);
+  if (!["yes", "no", "maybe"].includes(verdict)) {
+    return true;
+  }
+  return !String(job?.salary ?? "").trim();
 }
 
 /** Файлы ещё не в reports_processed, либо созданные в текущей сессии (run-today-live). */

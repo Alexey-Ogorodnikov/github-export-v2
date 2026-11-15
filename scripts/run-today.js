@@ -15,14 +15,38 @@ const files = fs
   .filter((name) => name.endsWith(".json"))
   .sort();
 
-if (files.length === 0) {
-  console.error("No custom search configs in custom-searches/");
+const filterRaw = String(process.env.RUN_TODAY_SEARCH_IDS || "").trim();
+const filterIds = filterRaw
+  ? new Set(
+      filterRaw
+        .split(",")
+        .map((id) => id.trim())
+        .filter(Boolean),
+    )
+  : null;
+
+const selectedFiles =
+  filterIds && filterIds.size > 0
+    ? files.filter((name) => {
+        const configPath = path.join(configDir, name);
+        const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
+        const searchId = String(config.id || "").trim() || path.basename(name, ".json");
+        return filterIds.has(searchId);
+      })
+    : files;
+
+if (selectedFiles.length === 0) {
+  console.error(
+    filterIds && filterIds.size > 0
+      ? "No matching custom search configs for the selected IDs."
+      : "No custom search configs in custom-searches/",
+  );
   process.exit(1);
 }
 
-console.log(`Running ${files.length} custom LinkedIn search(es)...`);
+console.log(`Running ${selectedFiles.length} custom search(es)...`);
 
-for (const file of files) {
+for (const file of selectedFiles) {
   const configPath = path.join(configDir, file);
   const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
   const searchId = String(config.id || "").trim() || path.basename(file, ".json");
